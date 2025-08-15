@@ -1,0 +1,3516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Buy&Sell - Buy & Sell</title>
+<!-- Font Awesome for consistent, professional icons -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkfN5iBn1j4eWZyQ0C9pNVr3XcXKQmkaG2j3v2YBv1YVYq8Yy7QmBs+Qw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+<!-- Fallback CDN (no SRI) in case the first fails or is blocked -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
+  referrerpolicy="no-referrer"
+/>
+<style>
+  :root{ --accent:#f5771f; --accent-hover:#d96e13; --accent-weak:#ffd6a1; --accent-shadow: rgba(245,119,31,0.3); }
+  .text-accent{ color: var(--accent) !important; }
+  .bg-accent{ background: var(--accent) !important; color: #fff !important; }
+  .border-accent{ border-color: var(--accent) !important; }
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background:#f5f5f5;
+    color:#333;
+  }
+
+  
+
+  /* Header */
+  header{
+    background:var(--accent);
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:white;
+    flex-wrap:wrap;
+  }
+  header h1{ margin:0; font-weight:700; font-size:1.6rem; user-select:none; cursor:default; }
+
+  #searchWrapper{ position:relative; flex-grow:1; min-width:180px; }
+  /* Verified badge */
+  .verified-badge{ display:inline-block; background:#28a745; color:#fff; font-size:11px; padding:2px 6px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+  #searchInput{
+    width:100%;
+    padding:8px 12px;
+    border:none;
+    border-radius:4px;
+    font-size:1rem;
+  }
+  #autocompleteList{
+    position:absolute; top:100%; left:0; right:0; background:white; color:#333;
+    border:1px solid #ccc; border-top:none; max-height:160px; overflow-y:auto; z-index:1200;
+    border-bottom-left-radius:6px; border-bottom-right-radius:6px;
+  }
+  #autocompleteList div{ padding:8px 12px; cursor:pointer; user-select:none; }
+  #autocompleteList div:hover{ background:var(--accent); color:#fff; }
+
+  button.header-btn{
+    background:white; color:var(--accent); border:none; font-weight:700; font-size:0.95rem;
+    padding:8px 14px; border-radius:5px; cursor:pointer;
+    transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    position: relative;
+  }
+  button.header-btn:hover{ background:var(--accent-weak); transform: translateY(-1px); }
+  .msg-badge{ position:absolute; top:-6px; right:-6px; background:#dc3545; color:#fff; border-radius:999px; font-size:12px; padding:2px 6px; line-height:1; display:none; }
+
+  #loggedInUser{ margin-left:auto; display:flex; gap:8px; align-items:center; font-weight:600; cursor:pointer; user-select:none; }
+  #loggedInUser .userIcon, #loggedInUser img.profilePic{
+    font-size:1.5rem;
+    border-radius:50%;
+    width:32px;
+    height:32px;
+    object-fit:cover;
+    background:#fff;
+    color:var(--accent);
+  }
+  #logoutBtn{ background:#fff;color:var(--accent);border:none;padding:6px 10px;border-radius:4px;cursor:pointer; }
+  #logoutBtn:hover{ background:#ffd6a1; }
+
+  main{ max-width:1000px; margin:22px auto; padding:0 16px; }
+
+     h2{ color:var(--accent); margin-bottom:10px; }
+   
+   .section-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     margin-bottom: 16px;
+     flex-wrap: wrap;
+     gap: 12px;
+   }
+   
+   .sort-controls {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+   }
+   
+   .sort-controls label {
+     font-weight: 600;
+     color: #495057;
+     font-size: 0.9rem;
+   }
+   
+   .sort-controls select {
+     padding: 6px 10px;
+     border: 1px solid #dee2e6;
+     border-radius: 6px;
+     font-size: 0.9rem;
+     background: white;
+     cursor: pointer;
+   }
+   
+   .sort-controls select:focus {
+     outline: none;
+     border-color: var(--accent);
+   }
+
+  /* Product list: horizontal scroll */
+  .product-list-horizontal{
+    display:flex;
+    gap:16px;
+    overflow-x:auto;
+    padding-bottom:10px;
+    scroll-behavior:smooth;
+  }
+  .product-list-horizontal::-webkit-scrollbar{ height:10px; }
+  .product-list-horizontal::-webkit-scrollbar-thumb{ background:var(--accent); border-radius:6px; }
+  .product-list-horizontal::-webkit-scrollbar-track{ background:#f1f1f1; border-radius:6px; }
+
+  /* Settings-driven styles */
+  body.reduce-motion * { transition: none !important; animation: none !important; }
+  body.compact-cards .product-card { flex: 0 0 220px; min-height: 280px; }
+  body.compact-cards .product-thumb { height: 130px; }
+
+  /* Product list: vertical grid */
+  .product-list-vertical{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* Product card */
+  .product-card{
+    flex:0 0 260px;
+    background:white;
+    border-radius:8px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.08);
+    display:flex; flex-direction:column; cursor:pointer;
+    min-height:320px; overflow:hidden;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  .product-card:hover{ transform: translateY(-4px); box-shadow:0 10px 22px rgba(0,0,0,0.12); }
+  .product-card.vertical{
+    flex: none;
+    width: 100%;
+  }
+  .product-thumb{
+    width:100%; height:150px; object-fit:cover; background:#eee;
+  }
+  .product-body{ padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .product-title{ display:flex; align-items:center; gap:8px; font-weight:700; color:var(--accent); }
+  .product-category{ font-size:0.9rem; color:#777; }
+  .product-desc{ font-size:0.90rem; color:#555; margin-top:6px; flex:1; overflow:hidden; }
+  .product-price{ font-weight:800; font-size:1.05rem; margin-top:8px; }
+
+  /* Modal base */
+  .modalOverlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55);
+    justify-content:center; align-items:center; z-index:1500; padding:20px;
+  }
+  .modalContent{
+    background:white; border-radius:10px; width:820px; max-width:100%; max-height:90vh;
+    overflow:auto; padding:18px 20px; position:relative;
+    animation: modal-pop 180ms ease-out;
+    color:#333;
+  }
+  @keyframes modal-pop { from { transform: scale(0.98); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .closeModalBtn{ position:absolute; right:14px; top:8px; font-size:22px; color:#999; cursor:pointer; }
+  .closeModalBtn:hover{ color:var(--accent); }
+
+  /* Subcategory modal specific styles */
+  .subcategory-modal .modalContent{
+    max-width: 600px;
+    max-height: 80vh;
+  }
+  
+  .subcategory-modal h2{
+    margin-bottom: 20px;
+    color: var(--accent);
+    font-size: 1.5rem;
+  }
+  
+  .subcategory-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+  
+  .subcategory-btn{
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+  
+  .subcategory-btn:hover{
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--accent-shadow);
+  }
+  
+  .subcategory-btn:active{
+    transform: translateY(0);
+  }
+
+  /* Add product form grid */
+  .form-grid{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
+  .form-row-full{ grid-column:1/-1; }
+
+  label{ display:block; margin-bottom:6px; font-weight:600; }
+  input[type="text"], input[type="email"], input[type="number"], textarea, select{
+    width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:6px;
+    font-size:0.95rem;
+  }
+  textarea{ resize:vertical; min-height:100px; }
+
+  .small-note{ font-size:0.85rem; color:#666; margin-top:-6px; margin-bottom:8px; }
+
+  .btn{ background:var(--accent); color:white; border:none; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight:700; }
+  .btn:hover{ background:var(--accent-hover); }
+
+  .img-preview-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+
+  .img-preview{
+    width:84px; height:64px; object-fit:cover; border-radius:6px; background:#eee;
+    border:1px solid #ddd;
+  }
+
+  /* Product detail layout */
+  .detail-grid{ display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
+  .detail-main-img{ width:100%; height:420px; object-fit:cover; border-radius:8px; background:#eee; }
+  .detail-thumbs{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .detail-thumb{ width:72px; height:56px; object-fit:cover; border-radius:6px; cursor:pointer; border:2px solid transparent; }
+  .detail-thumb.active{ border-color:var(--accent); }
+
+  .seller-card{ background:#fff6ee; border:1px solid #ffd9bf; padding:12px; border-radius:8px; }
+
+  /* Profile modal styles */
+  #modalProfile .modalContent{
+    max-width:700px;
+  }
+  #profilePicPreview{
+    width:120px; height:120px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); margin-bottom:12px;
+    background:#eee;
+  }
+  #profileInfo label{ font-weight:700; margin-top:12px; display:block; }
+  #profileInfo input[type="text"]{
+    width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:6px; font-size:1rem;
+  }
+  #userProductsList{
+    margin-top:20px;
+  }
+  #userProductsList h3{
+    margin-bottom:10px;
+    color:var(--accent);
+  }
+  .user-product-item{
+    background:#fff;
+    border-radius:8px;
+    padding:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.07);
+    margin-bottom:10px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .user-product-thumb{
+    width:72px; height:56px; object-fit:cover; border-radius:6px; background:#eee;
+  }
+  .user-product-info{
+    flex-grow:1;
+  }
+  .user-product-name{
+    font-weight:700; color:var(--accent); margin:0 0 4px 0;
+  }
+  .user-product-category{
+    font-size:0.9rem; color:#555; margin:0 0 8px 0;
+  }
+  .user-product-buttons{
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .user-product-buttons button{
+    font-size:0.85rem;
+    padding:6px 10px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .btn-edit{
+    background:var(--accent); color:#fff;
+  }
+  .btn-edit:hover{
+    background:#d96e13;
+  }
+  .btn-delete{
+    background:#c82333; color:#fff;
+  }
+  .btn-delete:hover{
+    background:#a71d2a;
+  }
+
+  /* Toast notifications */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 2000;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+  }
+  
+  .toast-success { border-left: 4px solid #28a745; }
+  .toast-error { border-left: 4px solid #dc3545; }
+  .toast-warning { border-left: 4px solid #ffc107; }
+  .toast-info { border-left: 4px solid #17a2b8; }
+  
+  .toast-icon { font-size: 18px; }
+  .toast-message { flex: 1; }
+  .toast-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Ratings & Reviews */
+  .rating-row{ display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .stars{ color:#ffb400; display:inline-flex; gap:2px; }
+  .stars .fa-star{ opacity:0.85; }
+  .rating-count{ color:#666; font-size:0.9rem; }
+  .reviews-section{ margin-top:14px; }
+  .review-item{ border-top:1px solid #eee; padding:10px 0; }
+  .review-meta{ color:#666; font-size:0.85rem; display:flex; align-items:center; gap:8px; }
+  .review-text{ margin:6px 0 0 0; white-space:pre-wrap; }
+  .add-review{ margin-top:10px; display:grid; gap:8px; grid-template-columns: 1fr; }
+  .add-review .star-picker{ display:flex; gap:6px; }
+  .star-btn{ background:none; border:none; cursor:pointer; font-size:20px; color:#ddd; }
+  .star-btn.active, .star-btn:hover{ color:#ffb400; }
+  .verified-badge{ background:#e7f5ff; color:#0d6efd; border:1px solid #b6e0ff; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:700; }
+  
+  /* Messaging Modal */
+  #modalMessage .modalContent{ max-width:700px; }
+  .chat-wrap{ display:flex; flex-direction:column; gap:10px; height:60vh; }
+  .chat-thread{ flex:1; overflow:auto; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; padding:10px; }
+  .msg{ margin:6px 0; max-width:75%; padding:8px 10px; border-radius:10px; line-height:1.3; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .msg.me{ margin-left:auto; background:var(--accent); color:#fff; border-top-right-radius:2px; }
+  .msg.them{ margin-right:auto; background:#fff; border:1px solid #e9ecef; border-top-left-radius:2px; }
+  .msg-meta{ font-size:0.75rem; color:#666; margin-top:3px; }
+  .chat-input{ display:flex; gap:8px; }
+  .chat-input input{ flex:1; padding:10px; border:1px solid #ced4da; border-radius:8px; }
+  /* Messages Center */
+  .messages-layout{ display:grid; grid-template-columns: 280px 1fr; gap:12px; min-height:60vh; }
+  .conv-list{ background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; padding:10px; display:flex; flex-direction:column; }
+  .conv-search{ padding:8px 10px; border:1px solid #ced4da; border-radius:6px; margin-bottom:8px; }
+  .conv-items{ overflow:auto; flex:1; display:flex; flex-direction:column; gap:6px; }
+  .conv-item{ background:#fff; border:1px solid #e9ecef; border-radius:8px; padding:8px; cursor:pointer; display:flex; gap:8px; align-items:flex-start; }
+  .conv-item:hover{ background:#f1f3f5; }
+  .conv-title{ font-weight:700; color:var(--accent); }
+  .conv-sub{ color:#666; font-size:0.85rem; }
+  .conv-chat{ display:flex; flex-direction:column; gap:10px; }
+  .conv-header{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #e9ecef; }
+  .conv-actions{ display:flex; gap:8px; }
+  .badge-unread{ background:#dc3545; color:#fff; border-radius:999px; padding:2px 8px; font-size:0.75rem; font-weight:700; }
+  .avatar{ width:36px; height:36px; border-radius:50%; overflow:hidden; background:var(--accent-weak); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:800; flex:0 0 auto; }
+  .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .avatar.sm{ width:28px; height:28px; font-size:0.8rem; }
+  .conv-main{ display:flex; flex-direction:column; }
+  .conv-top-row{ display:flex; align-items:center; gap:8px; }
+  .conv-meta{ display:flex; align-items:center; gap:8px; margin-left:auto; color:#666; font-size:0.8rem; }
+  .text-ellipsis{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  @media (max-width:900px){ .messages-layout{ grid-template-columns: 1fr; } }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  /* Product card enhancements */
+  .product-card-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 12px 0;
+  }
+  
+  .status-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .status-sold { background: #dc3545; }
+  .status-reserved { background: #ffc107; color: #333; }
+  .status-expired { background: #6c757d; }
+  
+  .favorite-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    color: inherit;
+  }
+  
+  .favorite-btn:hover { background: var(--accent-weak); }
+  
+  .favorite-btn.favorited {
+    animation: heartBeat 0.3s ease;
+    color: #dc3545;
+  }
+  
+  @keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  
+     .product-meta {
+     margin-top: 8px;
+     color: #666;
+     font-size: 0.8rem;
+   }
+   
+   /* Product stats and reactions */
+   .product-stats {
+     display: flex;
+     gap: 12px;
+     margin-bottom: 6px;
+   }
+   
+   .stat-item {
+     font-size: 0.75rem;
+     color: #666;
+     display: flex;
+     align-items: center;
+     gap: 2px;
+   }
+   
+   .product-reactions {
+     display: flex;
+     gap: 8px;
+     margin: 8px 0;
+   }
+   
+   .reaction-btn {
+     background: #f8f9fa;
+     border: 1px solid #dee2e6;
+     border-radius: 20px;
+     padding: 4px 12px;
+     font-size: 0.8rem;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     display: flex;
+     align-items: center;
+     gap: 4px;
+   }
+   
+   .reaction-btn:hover {
+     background: #e9ecef;
+     border-color: #adb5bd;
+   }
+   
+   .reaction-btn.active {
+     background: var(--accent);
+     color: white;
+     border-color: var(--accent);
+   }
+   
+   .like-btn.active {
+     background: #28a745;
+     border-color: #28a745;
+   }
+   
+   .dislike-btn.active {
+     background: #dc3545;
+     border-color: #dc3545;
+   }
+   
+   /* Product detail stats and reactions */
+   .product-stats-detail {
+     background: #f8f9fa;
+     border-radius: 8px;
+     padding: 12px;
+     margin: 16px 0;
+   }
+   
+   .stat-item-detail {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     margin-bottom: 8px;
+   }
+   
+   .stat-item-detail:last-child {
+     margin-bottom: 0;
+   }
+   
+   .stat-icon {
+     font-size: 1.2rem;
+   }
+   
+   .stat-label {
+     font-weight: 600;
+     color: #495057;
+     min-width: 60px;
+   }
+   /* Settings swatches */
+  .color-swatches{ display:flex; gap:8px; flex-wrap:wrap; }
+  .color-swatches .swatch{
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+    cursor: pointer; padding:0; outline: none;
+  }
+  .color-swatches .swatch:focus{ box-shadow: 0 0 0 3px var(--accent-weak), 0 0 0 1px rgba(0,0,0,0.15) inset; }
+   
+   .stat-value {
+     font-weight: 700;
+     color: var(--accent);
+   }
+   
+   .product-reactions-detail {
+     display: flex;
+     gap: 12px;
+     margin: 16px 0;
+   }
+   
+   .reaction-btn-detail {
+     background: #f8f9fa;
+     border: 2px solid #dee2e6;
+     border-radius: 25px;
+     padding: 8px 16px;
+     font-size: 0.9rem;
+     font-weight: 600;
+     cursor: pointer;
+     transition: all 0.2s ease;
+     display: flex;
+     align-items: center;
+     gap: 6px;
+     flex: 1;
+     justify-content: center;
+   }
+   
+   .reaction-btn-detail:hover {
+     background: #e9ecef;
+     border-color: #adb5bd;
+   }
+   
+   .reaction-btn-detail.active {
+     background: var(--accent);
+     color: white;
+     border-color: var(--accent);
+   }
+   /* Favorite button in detail (the one that is neither like nor dislike) */
+   .reaction-btn-detail:not(.like-btn-detail):not(.dislike-btn-detail).active {
+     background: #dc3545;
+     border-color: #dc3545;
+   }
+   
+   .like-btn-detail.active {
+     background: #28a745;
+     border-color: #28a745;
+   }
+   
+   .dislike-btn-detail.active {
+     background: #dc3545;
+     border-color: #dc3545;
+   }
+  
+  /* Enhanced responsive design */
+  @media (max-width:900px){
+    .detail-grid{ grid-template-columns: 1fr; }
+    .detail-main-img{ height:260px; }
+    .form-grid{ grid-template-columns: 1fr; }
+  }
+  
+  @media (max-width: 768px) {
+    .product-card { flex: 0 0 200px; }
+    .toast { min-width: 280px; right: 10px; }
+    .subcategory-grid{ grid-template-columns: 1fr; }
+  }
+  
+  @media (max-width: 480px) {
+    header { padding: 10px; }
+    .modalContent { width: 95vw; padding: 15px; }
+    .product-card { flex: 0 0 180px; }
+    .toast { min-width: 250px; right: 5px; }
+    .subcategory-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1 style="display:flex; align-items:center; gap:8px; margin-right:8px;">
+      <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
+      <span>Buy&Sell</span>
+    </h1>
+    <div id="searchWrapper">
+      <input type="text" id="searchInput" placeholder="Search by category (e.g. Electronics, Furniture)" />
+      <div id="autocompleteList"></div>
+    </div>
+
+  <!-- Settings Modal -->
+  <div id="modalSettings" class="modalOverlay" style="display:none;">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalSettings')">&times;</span>
+      <h2>Settings</h2>
+      <div class="form-row" style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="settingsSounds" />
+        <label for="settingsSounds">Enable sounds</label>
+      </div>
+      <div class="form-row" style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="settingsReduceMotion" />
+        <label for="settingsReduceMotion">Reduce motion</label>
+      </div>
+      <div class="form-row" style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="settingsCompact" />
+        <label for="settingsCompact">Compact product cards</label>
+      </div>
+      <div class="form-row">
+        <label for="settingsAccent"><strong>Theme accent</strong></label>
+        <input type="color" id="settingsAccent" value="#f5771f" />
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <button class="btn" onclick="selectAccent('#f5771f')" style="background:#f5771f">&nbsp;</button>
+          <button class="btn" onclick="selectAccent('#0d6efd')" style="background:#0d6efd">&nbsp;</button>
+          <button class="btn" onclick="selectAccent('#198754')" style="background:#198754">&nbsp;</button>
+          <button class="btn" onclick="selectAccent('#6f42c1')" style="background:#6f42c1">&nbsp;</button>
+          <button class="btn" onclick="selectAccent('#dc3545')" style="background:#dc3545">&nbsp;</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn" onclick="saveSettings()">Save</button>
+        <button class="header-btn" onclick="closeModal('modalSettings')">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Filters Modal -->
+  <div id="modalFilters" class="modalOverlay">
+    <div class="modalContent" role="dialog" aria-modal="true" aria-labelledby="filtersTitle">
+      <span class="closeModalBtn" onclick="closeModal('modalFilters')">&times;</span>
+      <h2 id="filtersTitle">Filters & Sort</h2>
+      <div class="form-grid">
+        <div>
+          <label for="filterMinPrice">Min Price</label>
+          <input type="number" id="filterMinPrice" placeholder="0" min="0" />
+        </div>
+        <div>
+          <label for="filterMaxPrice">Max Price</label>
+          <input type="number" id="filterMaxPrice" placeholder="100000" min="0" />
+        </div>
+        <div>
+          <label for="filterCondition">Condition</label>
+          <select id="filterCondition">
+            <option value="">Any</option>
+            <option value="New">New</option>
+            <option value="Used">Used</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterSort">Sort</label>
+          <select id="filterSort">
+            <option value="newest">Newest</option>
+            <option value="priceAsc">Price: Low → High</option>
+            <option value="priceDesc">Price: High → Low</option>
+            <option value="likes">Most Liked</option>
+            <option value="favorites">Most Favorited</option>
+          </select>
+        </div>
+        <div class="form-row-full" style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn" id="applyFiltersBtn">Apply</button>
+          <button class="header-btn" id="clearFiltersBtn">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Center Modal -->
+  <div id="modalMessages" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalMessages')">&times;</span>
+      <h2>Messages</h2>
+      <div class="messages-layout">
+        <div class="conv-list">
+          <input id="convSearch" class="conv-search" type="text" placeholder="Search user or product..." />
+          <div id="convItems" class="conv-items"></div>
+        </div>
+        <div class="conv-chat">
+          <div id="convHeader" class="conv-header"></div>
+          <div id="convThread" class="chat-thread" aria-live="polite"></div>
+          <div id="typingIndicator" style="min-height:18px; color:#6c757d; font-size:12px; margin-top:4px; padding:0 8px;"></div>
+          <div class="chat-input">
+            <input id="convInput" type="text" placeholder="Type your message..." onkeydown="handleTypingKey(event)" />
+            <input id="convAttach" type="file" accept="image/*" style="display:none" />
+            <button class="btn" style="background:#6c757d;" onclick="document.getElementById('convAttach').click()"><i class="fa-regular fa-image" aria-hidden="true"></i></button>
+            <button class="btn" onclick="sendCenterChatMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <button class="header-btn" onclick="openAddProductModal()">
+      <i class="fa-solid fa-plus" aria-hidden="true"></i>
+      Add Product
+    </button>
+    
+    <button id="settingsBtn" class="header-btn" onclick="openSettingsModal()" title="Settings">
+      <i class="fa-solid fa-gear" aria-hidden="true"></i>
+      Settings
+    </button>
+    <button id="messagesBtn" class="header-btn" style="display:none;" onclick="openMessagesCenter()" title="Messages">
+      <i class="fa-regular fa-message" aria-hidden="true"></i>
+      Messages
+      <span id="messagesBadge" class="msg-badge">0</span>
+    </button>
+    
+    <!-- User section (initially hidden) -->
+    <div id="loggedInUser" style="display:none;" onclick="openProfileModal()">
+      <div class="userIcon"><i class="fa-regular fa-user" aria-hidden="true"></i></div>
+      <span id="displayName">Robinson</span>
+    </div>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
+    
+    <!-- Login button (initially visible) -->
+    <button id="loginBtn" class="header-btn" onclick="openLoginModal()">Login</button>
+  </header>
+  
+  <!-- Compact header Filter button -->
+  <button class="header-btn" onclick="openFiltersModal()" title="Filters">
+    <i class="fa-solid fa-filter" aria-hidden="true"></i>
+    Filter
+  </button>
+  
+  <main>
+    
+    
+    <!-- Products for Sale Section -->
+    <div class="section-header">
+      <h2><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> Electronics</h2>
+      <div class="sort-controls">
+        <label for="electronicsSort">Sort by:</label>
+        <select id="electronicsSort" onchange="sortProducts('electronics', this.value)">
+          <option value="latest">Latest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <button class="header-btn" onclick="showSubcategoryModal('Electronics')">View All Electronics</button>
+    </div>
+    <div id="electronicsList" class="product-list-horizontal"></div>
+    
+    <div class="section-header">
+      <h2><i class="fa-solid fa-couch" aria-hidden="true"></i> Furniture</h2>
+      <div class="sort-controls">
+        <label for="furnitureSort">Sort by:</label>
+        <select id="furnitureSort" onchange="sortProducts('furniture', this.value)">
+          <option value="latest">Latest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <button class="header-btn" onclick="showSubcategoryModal('Furniture')">View All Furniture</button>
+    </div>
+    <div id="furnitureList" class="product-list-horizontal"></div>
+
+    <div class="section-header">
+      <h2><i class="fa-solid fa-shirt" aria-hidden="true"></i> Clothing</h2>
+      <div class="sort-controls">
+        <label for="clothingSort">Sort by:</label>
+        <select id="clothingSort" onchange="sortProducts('clothing', this.value)">
+          <option value="latest">Latest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <button class="header-btn" onclick="showSubcategoryModal('Clothing')">View All Clothing</button>
+    </div>
+    <div id="clothingList" class="product-list-horizontal"></div>
+
+    <div class="section-header">
+      <h2><i class="fa-solid fa-book" aria-hidden="true"></i> Books</h2>
+      <div class="sort-controls">
+        <label for="booksSort">Sort by:</label>
+        <select id="booksSort" onchange="sortProducts('books', this.value)">
+          <option value="latest">Latest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <button class="header-btn" onclick="showSubcategoryModal('Books')">View All Books</button>
+    </div>
+    <div id="booksList" class="product-list-horizontal"></div>
+
+    <div class="section-header">
+      <h2><i class="fa-solid fa-house" aria-hidden="true"></i> Home & Garden</h2>
+      <div class="sort-controls">
+        <label for="homeSort">Sort by:</label>
+        <select id="homeSort" onchange="sortProducts('home', this.value)">
+          <option value="latest">Latest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <button class="header-btn" onclick="showSubcategoryModal('Home & Garden')">View All Home & Garden</button>
+    </div>
+    <div id="homeList" class="product-list-horizontal"></div>
+
+    <div class="section-header">
+      <h2><i class="fa-solid fa-futbol" aria-hidden="true"></i> Sports</h2>
+      <div class="sort-controls">
+        <label for="sportsSort">Sort by:</label>
+        <select id="sportsSort" onchange="sortProducts('sports', this.value)">
+          <option value="latest">Latest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="popular">Most Popular</option>
+        </select>
+      </div>
+      <button class="header-btn" onclick="showSubcategoryModal('Sports')">View All Sports</button>
+    </div>
+    <div id="sportsList" class="product-list-horizontal"></div>
+
+    <!-- Subcategory Products Section (initially hidden) -->
+  <div id="subcategorySection" style="display: none;">
+      <div class="section-header">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+          <button class="header-btn" onclick="hideSubcategoryView()" style="background: var(--accent); color:#ffffff; padding: 8px 16px;">
+            <i class="fa-solid fa-house" aria-hidden="true"></i> Back to Home
+          </button>
+          <h2 id="subcategoryTitle" style="margin: 0;">Category Products</h2>
+        </div>
+        <div class="sort-controls">
+          <label for="subcategorySort">Sort by:</label>
+          <select id="subcategorySort" onchange="sortSubcategoryProducts(this.value)">
+            <option value="latest">Latest</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="popular">Most Popular</option>
+          </select>
+        </div>
+      </div>
+      <div id="subcategoryProductsList" class="product-list-vertical"></div>
+    </div>
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="modalSettings" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalSettings')">&times;</span>
+      <h2>Settings</h2>
+      <div class="form-grid">
+        <div class="form-row-full" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="settingsSounds" />
+          <label for="settingsSounds" style="margin:0;">Enable Sounds</label>
+        </div>
+        <div class="form-row-full" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="settingsReduceMotion" />
+          <label for="settingsReduceMotion" style="margin:0;">Reduce Motion (disable animations)</label>
+        </div>
+        <div class="form-row-full" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="settingsCompact" />
+          <label for="settingsCompact" style="margin:0;">Compact Product Cards</label>
+        </div>
+        <div class="form-row-full" style="display:flex; align-items:center; gap:10px;">
+          <label for="settingsAccent" style="margin:0; min-width:140px; font-weight:600;">Theme Color</label>
+          <input type="color" id="settingsAccent" value="#f5771f" aria-label="Theme Accent Color" />
+        </div>
+        <div class="form-row-full" style="display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
+          <span style="font-weight:600; min-width:140px;">Presets</span>
+          <div class="color-swatches">
+            <button type="button" class="swatch" style="--sw: #f5771f; background: #f5771f;" onclick="selectAccent('#f5771f')" aria-label="Orange"></button>
+            <button type="button" class="swatch" style="--sw: #dc3545; background: #dc3545;" onclick="selectAccent('#dc3545')" aria-label="Red"></button>
+            <button type="button" class="swatch" style="--sw: #0d6efd; background: #0d6efd;" onclick="selectAccent('#0d6efd')" aria-label="Blue"></button>
+            <button type="button" class="swatch" style="--sw: #6610f2; background: #6610f2;" onclick="selectAccent('#6610f2')" aria-label="Purple"></button>
+            <button type="button" class="swatch" style="--sw: #20c997; background: #20c997;" onclick="selectAccent('#20c997')" aria-label="Teal"></button>
+            <button type="button" class="swatch" style="--sw: #198754; background: #198754;" onclick="selectAccent('#198754')" aria-label="Green"></button>
+            <button type="button" class="swatch" style="--sw: #fd7e14; background: #fd7e14;" onclick="selectAccent('#fd7e14')" aria-label="Orange 2"></button>
+          </div>
+        </div>
+        <div class="form-row-full" style="margin-top:10px; display:flex; gap:10px;">
+          <button class="btn" onclick="saveSettings()">Save</button>
+          <button class="header-btn" onclick="cancelSettings()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Login Modal -->
+  <div id="modalLogin" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalLogin')">&times;</span>
+      <h2>Login</h2>
+      <div class="form-grid">
+        <div class="form-row-full">
+          <label for="loginEmail">Email:</label>
+          <input type="email" id="loginEmail" required />
+        </div>
+        <div class="form-row-full">
+          <label for="loginPassword">Password:</label>
+          <input type="password" id="loginPassword" required />
+        </div>
+        <div class="form-row-full">
+          <button class="btn" onclick="performLogin()">Login</button>
+        </div>
+        <div class="form-row-full" style="text-align:center; margin-top:10px;">
+          <span style="color:#666;">Don't have an account? </span>
+          <a href="#" onclick="switchToRegister()" style="color:var(--accent); text-decoration:none; font-weight:600;">Register here</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="modalRegister" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalRegister')">&times;</span>
+      <h2>Register</h2>
+      <div class="form-grid">
+        <div class="form-row-full">
+          <label for="regName">Full Name:</label>
+          <input type="text" id="regName" required />
+        </div>
+        <div class="form-row-full">
+          <label for="regEmail">Email:</label>
+          <input type="email" id="regEmail" required />
+        </div>
+        <div class="form-row-full">
+          <label for="regPassword">Password:</label>
+          <input type="password" id="regPassword" required />
+        </div>
+        <div class="form-row-full">
+          <button class="btn" onclick="performRegister()">Register</button>
+        </div>
+        <div class="form-row-full" style="text-align:center; margin-top:10px;">
+          <span style="color:#666;">Already have an account? </span>
+          <a href="#" onclick="switchToLogin()" style="color:var(--accent); text-decoration:none; font-weight:600;">Login here</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div id="modalAddProduct" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalAddProduct')">&times;</span>
+      <h2 id="addProductTitle">Add New Product</h2>
+      <div class="form-grid">
+        <div>
+          <label for="productName">Product Name:</label>
+          <input type="text" id="productName" required />
+        </div>
+        <div>
+          <label for="productCategory">Category:</label>
+          <select id="productCategory" required onchange="onCategoryChange()">
+            <option value="">Select Category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Furniture">Furniture</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Books">Books</option>
+            <option value="Home & Garden">Home & Garden</option>
+            <option value="Sports">Sports</option>
+          </select>
+        </div>
+        <div>
+          <label for="productSubcategory">Subcategory:</label>
+          <select id="productSubcategory" disabled>
+            <option value="">Select Subcategory</option>
+          </select>
+        </div>
+        <div class="form-row-full">
+          <label for="productDescription">Description:</label>
+          <textarea id="productDescription" required></textarea>
+        </div>
+        <div>
+          <label for="productPrice">Price (PKR / Rs):</label>
+          <input type="number" id="productPrice" step="0.01" min="0" required />
+        </div>
+        <div>
+          <label for="productCondition">Condition:</label>
+          <select id="productCondition" required>
+            <option value="">Select Condition</option>
+            <option value="New">New</option>
+            <option value="Like New">Like New</option>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+            <option value="Poor">Poor</option>
+          </select>
+        </div>
+        <div class="form-row-full">
+          <label for="productImages">Product Images:</label>
+          <input type="file" id="productImages" multiple accept="image/*" onchange="previewImages()" />
+          <p class="small-note">Select up to 5 images (JPG, PNG, WebP)</p>
+          <div id="imagePreviewRow" class="img-preview-row"></div>
+        </div>
+        <div class="form-row-full">
+          <button class="btn" onclick="submitProduct()" id="submitProductBtn">Add Product</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div id="modalProductDetail" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalProductDetail')">&times;</span>
+      <div class="detail-grid">
+        <div>
+          <img id="detailMainImg" class="detail-main-img" />
+          <div id="detailThumbs" class="detail-thumbs"></div>
+        </div>
+        <div>
+          <div id="detailContent"></div>
+          <div class="seller-card">
+            <h4 style="margin:0 0 8px 0; color:var(--accent);">Seller Information</h4>
+            <div id="sellerInfo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messaging Modal -->
+  <div id="modalMessage" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalMessage')">&times;</span>
+      <h2>Message Seller</h2>
+      <div class="chat-wrap">
+        <div id="chatThread" class="chat-thread" aria-live="polite"></div>
+        <div class="chat-input">
+          <input id="chatInput" type="text" placeholder="Type your message..." onkeydown="if(event.key==='Enter'){sendChatMessage()}" />
+          <button class="btn" onclick="sendChatMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="modalProfile" class="modalOverlay">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalProfile')">&times;</span>
+      <h2>My Profile</h2>
+      <div style="text-align:center;">
+        <img id="profilePicPreview" />
+        <div>
+          <input type="file" id="profilePicInput" accept="image/*" onchange="previewProfilePic()" style="display:none;" />
+          <button class="btn" onclick="document.getElementById('profilePicInput').click()">Change Photo</button>
+        </div>
+      </div>
+      <div id="profileInfo"></div>
+      <div id="userProductsList">
+        <h3>My Products</h3>
+        <div id="userProductsContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subcategory Modal -->
+  <div id="modalSubcategory" class="modalOverlay subcategory-modal">
+    <div class="modalContent">
+      <span class="closeModalBtn" onclick="closeModal('modalSubcategory')">&times;</span>
+      <h2 id="subcategoryModalTitle">Electronics Subcategories</h2>
+      <div id="subcategoryGrid" class="subcategory-grid">
+        <!-- Subcategory buttons will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+<script>
+// Global variables
+let currentUser = null;
+let products = [];
+let editingProductId = null;
+let favorites = new Set();
+let productReactions = {}; // Track likes/dislikes per product
+let productStats = {}; // Track views, favorites, etc.
+let users = []; // Registered users persisted in localStorage
+let tempSelectedImages = []; // Accumulate selected images (DataURLs) for Add/Edit Product
+// App settings (persisted)
+let appSettings = { sounds: false, reduceMotion: false, compactCards: false, accent: '#f5771f' };
+
+// Backend API base URL
+const API_BASE = 'http://localhost:4000/api';
+
+// Load products from backend API
+async function loadProductsFromAPI(){
+  try{
+    const res = await fetch(`${API_BASE}/products`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    products = Array.isArray(data?.items) ? data.items : [];
+  }catch(e){
+    console.warn('Failed to load products from backend:', e);
+    try { showToast && showToast('Could not load products from server', 'error'); } catch(_){}
+  }
+}
+
+// --- API helpers (CRUD) ---
+async function apiCreateProduct(payload){
+  const res = await fetch(`${API_BASE}/products`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error('Create failed');
+  return res.json();
+}
+async function apiUpdateProduct(id, payload){
+  const res = await fetch(`${API_BASE}/products/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error('Update failed');
+  return res.json();
+}
+async function apiDeleteProduct(id){
+  const res = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
+  if(!res.ok) throw new Error('Delete failed');
+}
+
+async function refreshProducts(){
+  await loadProductsFromAPI();
+  displayProductsByCategory();
+}
+
+// --- Add/Edit/Delete wiring ---
+function openAddProductModal(){
+  editingProductId = null;
+  tempSelectedImages = [];
+  document.getElementById('addProductTitle')?.replaceChildren(document.createTextNode('Add New Product'));
+  document.getElementById('submitProductBtn')?.replaceChildren(document.createTextNode('Add Product'));
+  // clear form
+  const nameEl = document.getElementById('productName'); if(nameEl) nameEl.value = '';
+  const catEl = document.getElementById('productCategory'); if(catEl) catEl.value = '';
+  const subEl = document.getElementById('productSubcategory'); if(subEl){ subEl.value=''; subEl.disabled = true; subEl.innerHTML = '<option value="">Select Subcategory</option>'; }
+  const descEl = document.getElementById('productDescription'); if(descEl) descEl.value = '';
+  const priceEl = document.getElementById('productPrice'); if(priceEl) priceEl.value = '';
+  const condEl = document.getElementById('productCondition'); if(condEl) condEl.value = '';
+  const prev = document.getElementById('imagePreviewRow'); if(prev) prev.innerHTML = '';
+  document.getElementById('modalAddProduct').style.display = 'flex';
+}
+
+function openEditProductModal(id){
+  const prod = products.find(p => String(p.id) === String(id));
+  if(!prod){ showToast?.('Product not found', 'error'); return; }
+  editingProductId = prod.id;
+  tempSelectedImages = Array.isArray(prod.images) ? [...prod.images] : [];
+  document.getElementById('addProductTitle')?.replaceChildren(document.createTextNode('Edit Product'));
+  document.getElementById('submitProductBtn')?.replaceChildren(document.createTextNode('Save Changes'));
+  // populate form
+  const nameEl = document.getElementById('productName'); if(nameEl) nameEl.value = prod.title || '';
+  const catEl = document.getElementById('productCategory'); if(catEl) catEl.value = prod.category || '';
+  populateSubcategoryOptions(prod.category || '', prod.subcategory || '');
+  const subEl = document.getElementById('productSubcategory'); if(subEl){ subEl.disabled = false; subEl.value = prod.subcategory || ''; }
+  const descEl = document.getElementById('productDescription'); if(descEl) descEl.value = prod.description || '';
+  const priceEl = document.getElementById('productPrice'); if(priceEl) priceEl.value = prod.price ?? '';
+  const condEl = document.getElementById('productCondition'); if(condEl) condEl.value = prod.condition || '';
+  // preview
+  const prev = document.getElementById('imagePreviewRow');
+  if(prev){
+    prev.innerHTML = '';
+    tempSelectedImages.forEach(src => {
+      const img = document.createElement('img');
+      img.src = src; img.className = 'img-preview'; prev.appendChild(img);
+    });
+  }
+  document.getElementById('modalAddProduct').style.display = 'flex';
+}
+
+async function submitProduct(){
+  const name = document.getElementById('productName')?.value?.trim();
+  const category = document.getElementById('productCategory')?.value || '';
+  const subcategory = document.getElementById('productSubcategory')?.value || '';
+  const description = document.getElementById('productDescription')?.value?.trim() || '';
+  const priceVal = document.getElementById('productPrice')?.value;
+  const condition = document.getElementById('productCondition')?.value || '';
+  const images = tempSelectedImages.slice(0,5);
+  const price = Number(priceVal || 0);
+  if(!name || !category){ showToast?.('Name and Category are required', 'warning'); return; }
+  try{
+    const payload = { title: name, description, price, category, subcategory, images, condition };
+    if(editingProductId){
+      await apiUpdateProduct(editingProductId, payload);
+      showToast?.('Product updated', 'success');
+    } else {
+      await apiCreateProduct(payload);
+      showToast?.('Product added', 'success');
+    }
+    await refreshProducts();
+    closeModal('modalAddProduct');
+    // reset
+    editingProductId = null; tempSelectedImages = [];
+    document.getElementById('submitProductBtn')?.replaceChildren(document.createTextNode('Add Product'));
+    document.getElementById('addProductTitle')?.replaceChildren(document.createTextNode('Add New Product'));
+  }catch(e){
+    console.warn(e);
+    showToast?.('Failed to save product', 'error');
+  }
+}
+
+async function deleteProduct(id){
+  try{
+    if(!confirm('Delete this product?')) return;
+    await apiDeleteProduct(id);
+    await refreshProducts();
+    showToast?.('Product deleted', 'success');
+  }catch(e){
+    showToast?.('Failed to delete', 'error');
+  }
+}
+
+// Image preview: collect DataURLs into tempSelectedImages
+function previewImages(){
+  const input = document.getElementById('productImages');
+  const row = document.getElementById('imagePreviewRow');
+  tempSelectedImages = [];
+  if(row) row.innerHTML = '';
+  const files = Array.from(input?.files || []).slice(0,5);
+  if(files.length === 0) return;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const src = e.target.result;
+      tempSelectedImages.push(src);
+      if(row){ const img = document.createElement('img'); img.src = src; img.className='img-preview'; row.appendChild(img); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Filters/Sort state
+const filterState = {
+  query: '', // from #searchInput
+  minPrice: '',
+  maxPrice: '',
+  condition: '',
+  sort: 'newest'
+};
+
+// Per-user viewed products (persist once per product)
+// Reviews per productId and conversations per conversation key
+let reviews = {}; // { [productId]: [{by,email,name,rating,text,date}] }
+let conversations = {}; // { [convKey]: [{from,to,text,ts}] }
+let activeConversation = { key: null, productId: null, with: null };
+const viewedProducts = new Set((()=>{
+  try { return JSON.parse(localStorage.getItem('viewedProducts')||'[]'); } catch(_) { return []; }
+})());
+function markProductViewed(id){
+  viewedProducts.add(String(id));
+  try { localStorage.setItem('viewedProducts', JSON.stringify(Array.from(viewedProducts))); } catch(_) {}
+}
+function hasViewedProduct(id){
+  return viewedProducts.has(String(id));
+}
+
+// ---- Settings helpers ----
+// Color utilities for deriving accent variants
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  const bigint = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return { r:(bigint>>16)&255, g:(bigint>>8)&255, b:bigint&255 };
+}
+function clamp(n,min,max){ return Math.min(max, Math.max(min,n)); }
+function darken(hex, amt=15){ const {r,g,b}=hexToRgb(hex); return `#${[r,g,b].map(v=>clamp(Math.round(v*(100-amt)/100),0,255).toString(16).padStart(2,'0')).join('')}`; }
+function mixWithWhite(hex, percent=80){ const {r,g,b}=hexToRgb(hex); const w=255; const p=percent/100; const nr=Math.round(r+(w-r)*p), ng=Math.round(g+(w-g)*p), nb=Math.round(b+(w-b)*p); return `#${[nr,ng,nb].map(v=>v.toString(16).padStart(2,'0')).join('')}`; }
+function toRgba(hex, a=0.3){ const {r,g,b}=hexToRgb(hex); return `rgba(${r}, ${g}, ${b}, ${a})`; }
+function deriveAccentVariants(accent){
+  try{
+    const hover = darken(accent, 12);
+    const weak = mixWithWhite(accent, 85);
+    const shadow = toRgba(accent, 0.28);
+    return { hover, weak, shadow };
+  }catch(_){ return { hover:'#d96e13', weak:'#ffd6a1', shadow:'rgba(245,119,31,0.3)' }; }
+}
+
+function applySettings() {
+  // Apply body classes
+  document.body.classList.toggle('reduce-motion', !!appSettings.reduceMotion);
+  document.body.classList.toggle('compact-cards', !!appSettings.compactCards);
+  // Sounds
+  isMuted = !appSettings.sounds;
+  // Theme accent
+  try {
+    const accent = appSettings.accent || '#f5771f';
+    const vars = deriveAccentVariants(accent);
+    const root = document.documentElement.style;
+    root.setProperty('--accent', accent);
+    root.setProperty('--accent-hover', vars.hover);
+    root.setProperty('--accent-weak', vars.weak);
+    root.setProperty('--accent-shadow', vars.shadow);
+  } catch(_) {}
+}
+
+function loadSettingsFromStorage() {
+  try {
+    const raw = localStorage.getItem('appSettings');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      appSettings = { sounds: false, reduceMotion: false, compactCards: false, accent: '#f5771f', ...parsed };
+    }
+  } catch(_) {}
+  applySettings();
+}
+
+function openSettingsModal() {
+  // Initialize checkboxes from current settings
+  const s = appSettings || {};
+  const sounds = document.getElementById('settingsSounds');
+  const reduce = document.getElementById('settingsReduceMotion');
+  const compact = document.getElementById('settingsCompact');
+  const accent = document.getElementById('settingsAccent');
+  if (sounds) sounds.checked = !!s.sounds;
+  if (reduce) reduce.checked = !!s.reduceMotion;
+  if (compact) compact.checked = !!s.compactCards;
+  if (accent && s.accent) accent.value = s.accent;
+  // Live preview on input change
+  if (accent){
+    accent.oninput = (e)=>{
+      const val = e.target.value || s.accent || '#f5771f';
+      const vars = deriveAccentVariants(val);
+      const root = document.documentElement.style;
+      root.setProperty('--accent', val);
+      root.setProperty('--accent-hover', vars.hover);
+      root.setProperty('--accent-weak', vars.weak);
+      root.setProperty('--accent-shadow', vars.shadow);
+    };
+  }
+  // Show modal
+  const modal = document.getElementById('modalSettings');
+  if (modal) modal.style.display = 'flex';
+}
+
+function saveSettings() {
+  const sounds = !!document.getElementById('settingsSounds')?.checked;
+  const reduce = !!document.getElementById('settingsReduceMotion')?.checked;
+  const compact = !!document.getElementById('settingsCompact')?.checked;
+  const accent = document.getElementById('settingsAccent')?.value || '#f5771f';
+  appSettings = { sounds, reduceMotion: reduce, compactCards: compact, accent };
+  try { localStorage.setItem('appSettings', JSON.stringify(appSettings)); } catch(_) {}
+  applySettings();
+  showToast('Settings saved', 'success');
+  try { sfxSave(); } catch(_) {}
+  closeModal('modalSettings');
+}
+
+function cancelSettings(){
+  // Re-apply saved settings to discard live preview
+  applySettings();
+  closeModal('modalSettings');
+}
+
+function selectAccent(hex){
+  const input = document.getElementById('settingsAccent');
+  if (input){ input.value = hex; input.dispatchEvent(new Event('input', { bubbles:true })); }
+}
+
+// Load settings on startup (after DOM ready)
+if (document.readyState !== 'loading') {
+  try { loadSettingsFromStorage(); } catch(_) {}
+  try { initFilters(); } catch(_) {}
+} else {
+  document.addEventListener('DOMContentLoaded', () => {
+    try { loadSettingsFromStorage(); } catch(_) {}
+    try { initFilters(); } catch(_) {}
+  });
+}
+
+// Initialize filter UI events
+function initFilters(){
+  const qInput = document.getElementById('searchInput');
+  const min = document.getElementById('filterMinPrice');
+  const max = document.getElementById('filterMaxPrice');
+  const cond = document.getElementById('filterCondition');
+  const sort = document.getElementById('filterSort');
+  const applyBtn = document.getElementById('applyFiltersBtn');
+  const clearBtn = document.getElementById('clearFiltersBtn');
+
+  function applyFromUI(){
+    filterState.query = (qInput?.value||'').trim();
+    filterState.minPrice = min?.value || '';
+    filterState.maxPrice = max?.value || '';
+    filterState.condition = cond?.value || '';
+    filterState.sort = sort?.value || 'newest';
+    displayProductsByCategory();
+  }
+
+  // live search via header input
+  if (qInput) qInput.addEventListener('input', ()=>{ filterState.query=qInput.value.trim(); displayProductsByCategory(); });
+  applyBtn?.addEventListener('click', ()=>{ sfxSave?.(); applyFromUI(); closeModal('modalFilters'); });
+  clearBtn?.addEventListener('click', ()=>{
+    if(qInput) qInput.value=''; if(min) min.value=''; if(max) max.value=''; if(cond) cond.value=''; if(sort) sort.value='newest';
+    applyFromUI();
+    closeModal('modalFilters');
+  });
+}
+
+// Open Filters modal and sync current state
+function openFiltersModal(){
+  const min = document.getElementById('filterMinPrice');
+  const max = document.getElementById('filterMaxPrice');
+  const cond = document.getElementById('filterCondition');
+  const sort = document.getElementById('filterSort');
+  if (min) min.value = filterState.minPrice || '';
+  if (max) max.value = filterState.maxPrice || '';
+  if (cond) cond.value = filterState.condition || '';
+  if (sort) sort.value = filterState.sort || 'newest';
+  const modal = document.getElementById('modalFilters');
+  if (modal){ modal.style.display='flex'; sfxOpenModal?.(); }
+}
+
+// Label normalization helper to make filtering robust
+function normalizeLabel(str) {
+  return String(str || '')
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, 'and')
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9 ]+/g, '')
+    .replace(/\s+/g, '');
+}
+
+// Persistence helpers
+// User helpers
+function findUserByEmail(email) {
+  const e = String(email || '').toLowerCase().trim();
+  return users.find(u => String(u.email || '').toLowerCase().trim() === e);
+}
+
+function getUserIndexByEmail(email) {
+  const e = String(email || '').toLowerCase().trim();
+  return users.findIndex(u => String(u.email || '').toLowerCase().trim() === e);
+}
+
+function upsertCurrentUserIntoUsers() {
+  if (!currentUser || !currentUser.email) return;
+  const idx = getUserIndexByEmail(currentUser.email);
+  if (idx >= 0) {
+    users[idx] = { ...users[idx], ...currentUser };
+  } else {
+    users.push({ ...currentUser });
+  }
+}
+// Conversations meta for unread tracking
+let conversationsMeta = {};
+function saveState() {
+  try {
+    localStorage.setItem('products', JSON.stringify(products));
+    localStorage.setItem('favorites', JSON.stringify(Array.from(favorites)));
+    localStorage.setItem('productReactions', JSON.stringify(productReactions));
+    localStorage.setItem('productStats', JSON.stringify(productStats));
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+    localStorage.setItem('conversations', JSON.stringify(conversations));
+    localStorage.setItem('conversationsMeta', JSON.stringify(conversationsMeta));
+    if (currentUser) localStorage.setItem('currentUser', JSON.stringify(currentUser));
+  } catch (e) {
+    console.warn('Failed to save state:', e);
+  }
+}
+
+function loadState() {
+  try {
+    const storedProducts = localStorage.getItem('products');
+    const storedFavorites = localStorage.getItem('favorites');
+    const storedReactions = localStorage.getItem('productReactions');
+    const storedStats = localStorage.getItem('productStats');
+    const storedUsers = localStorage.getItem('users');
+    const storedUser = localStorage.getItem('currentUser');
+    const storedReviews = localStorage.getItem('reviews');
+    const storedConversations = localStorage.getItem('conversations');
+    const storedConversationsMeta = localStorage.getItem('conversationsMeta');
+    
+    products = storedProducts ? JSON.parse(storedProducts) : [];
+    favorites = storedFavorites ? new Set(JSON.parse(storedFavorites)) : new Set();
+    productReactions = storedReactions ? JSON.parse(storedReactions) : {};
+    productStats = storedStats ? JSON.parse(storedStats) : {};
+    users = storedUsers ? JSON.parse(storedUsers) : [];
+    currentUser = storedUser ? JSON.parse(storedUser) : null;
+    reviews = storedReviews ? JSON.parse(storedReviews) : {};
+    conversations = storedConversations ? JSON.parse(storedConversations) : {};
+    conversationsMeta = storedConversationsMeta ? JSON.parse(storedConversationsMeta) : {};
+    // (Verified logic removed)
+  } catch (e) {
+    console.warn('Failed to load state:', e);
+  }
+}
+
+// Define subcategories for each main category
+const categorySubcategories = {
+  'Electronics': [
+    'Smartphones & Tablets',
+    'Computers & Laptops',
+    'Audio & Headphones',
+    'Gaming Consoles',
+    'TV & Home Theater',
+    'Cameras & Photography',
+    'Smart Home',
+    'Accessories'
+  ],
+  'Furniture': [
+    'Living Room',
+    'Bedroom',
+    'Kitchen & Dining',
+    'Office Furniture',
+    'Outdoor Furniture',
+    'Storage & Organization',
+    'Lighting',
+    'Decor & Accessories'
+  ],
+  'Clothing': [
+    'Men\'s Clothing',
+    'Women\'s Clothing',
+    'Kids & Baby',
+    'Shoes',
+    'Accessories',
+    'Bags & Luggage',
+    'Jewelry & Watches',
+    'Sportswear'
+  ],
+  'Books': [
+    'Fiction',
+    'Non-Fiction',
+    'Educational',
+    'Children\'s Books',
+    'Comics & Graphic Novels',
+    'Religious & Spiritual',
+    'Art & Design',
+    'Magazines'
+  ],
+  'Home & Garden': [
+    'Kitchen Appliances',
+    'Cleaning Supplies',
+    'Garden Tools',
+    'Plants & Seeds',
+    'Home Improvement',
+    'Plumbing & Electrical',
+    'Security Systems',
+    'Outdoor Living'
+  ],
+  'Sports': [
+    'Fitness Equipment',
+    'Team Sports',
+    'Individual Sports',
+    'Outdoor Recreation',
+    'Water Sports',
+    'Winter Sports',
+    'Cycling',
+    'Sports Apparel'
+  ]
+};
+
+// Populate subcategory options when category changes (Add Product modal)
+function onCategoryChange() {
+  const category = document.getElementById('productCategory').value;
+  populateSubcategoryOptions(category);
+}
+
+function populateSubcategoryOptions(category, selected = '') {
+  const subSel = document.getElementById('productSubcategory');
+  if (!subSel) return;
+  const subs = categorySubcategories[category] || [];
+  subSel.innerHTML = '<option value="">Select Subcategory</option>' +
+    subs.map(s => `<option value="${s}">${s}</option>`).join('');
+  // Enable and require if there are subcategories and a category is chosen
+  if (category && subs.length > 0) {
+    subSel.disabled = false;
+    subSel.required = true;
+  } else {
+    subSel.disabled = true;
+    subSel.required = false;
+    subSel.value = '';
+  }
+  if (selected) {
+    subSel.value = selected;
+  }
+}
+
+// Initialize the app
+window.onload = function() {
+  initializeApp();
+};
+
+async function initializeApp() {
+  // Try backend first
+  await loadProductsFromAPI();
+
+  // Fallback to local storage if API returned nothing
+  if (!Array.isArray(products) || products.length === 0) {
+    try { loadState(); } catch(_) {}
+  }
+
+  // Set up search functionality
+  setupSearch();
+
+  // Force show all category sections
+  forceShowCategorySections();
+
+  // Display products
+  displayProductsByCategory();
+
+  // Check if user is logged in (if available)
+  try { checkLoginStatus(); } catch(_) {}
+
+  showToast('Welcome to Buy&Sell Marketplace!', 'info');
+}
+
+// Force show all category sections
+function forceShowCategorySections() {
+  // Make sure all main category sections are visible
+  const mainSections = document.querySelectorAll('.section-header').forEach(section => {
+    section.style.display = 'flex';
+    section.parentElement.style.display = 'block';
+  });
+  
+  // Make sure subcategory section is hidden
+  const subcategorySection = document.getElementById('subcategorySection');
+  if (subcategorySection) {
+    subcategorySection.style.display = 'none';
+  }
+  
+  // Make sure emergency button is hidden
+  const emergencyBtn = document.getElementById('emergencyHomeBtn');
+  if (emergencyBtn) {
+    emergencyBtn.style.display = 'none';
+  }
+}
+
+function initializeSampleData() {
+  // Start with empty products array - users can add their own products
+  products = [];
+  
+  // Initialize stats and reactions
+  products.forEach(product => {
+    productStats[product.id] = {
+      views: product.views || 0,
+      favorites: product.favorites || 0
+    };
+    productReactions[product.id] = {
+      likes: product.likes || 0,
+      dislikes: product.dislikes || 0,
+      userReaction: null
+    };
+  });
+}
+
+// Show subcategory modal
+function showSubcategoryModal(category) {
+  const modal = document.getElementById('modalSubcategory');
+  const title = document.getElementById('subcategoryModalTitle');
+  const grid = document.getElementById('subcategoryGrid');
+  
+  // Set the title
+  title.textContent = `${category} Subcategories`;
+  
+  // Clear existing buttons
+  grid.innerHTML = '';
+  
+  // Get subcategories for this category
+  const subcategories = categorySubcategories[category] || [];
+  
+  // Create buttons for each subcategory
+  subcategories.forEach(subcategory => {
+    const button = document.createElement('button');
+    button.className = 'subcategory-btn';
+    button.textContent = subcategory; // This was the missing line!
+    button.onclick = () => {
+      showSubcategoryProducts(category, subcategory);
+      closeModal('modalSubcategory');
+    };
+    grid.appendChild(button);
+  });
+  
+  // If no subcategories, show a message
+  if (subcategories.length === 0) {
+    const message = document.createElement('div');
+    message.style.textAlign = 'center';
+    message.style.color = '#666';
+    message.style.padding = '20px';
+    message.textContent = `No subcategories available for ${category}`;
+    grid.appendChild(message);
+  }
+  
+  // Show the modal
+  modal.style.display = 'flex';
+}
+
+// Show products for a specific subcategory
+function showSubcategoryProducts(category, subcategory) {
+  const subcategorySection = document.getElementById('subcategorySection');
+  const subcategoryTitle = document.getElementById('subcategoryTitle');
+  const subcategoryProductsList = document.getElementById('subcategoryProductsList');
+  
+  // Hide main category sections
+  document.querySelectorAll('.product-list-horizontal').forEach(list => {
+    // hide the product list itself
+    list.style.display = 'none';
+    // hide its section header (previous sibling)
+    const header = list.previousElementSibling;
+    if (header && header.classList && header.classList.contains('section-header')) {
+      header.style.display = 'none';
+    }
+  });
+  
+  // Show subcategory section
+  subcategorySection.style.display = 'block';
+  subcategoryTitle.textContent = `${category} › ${subcategory}`;
+  
+  // Filter products by category and subcategory (strict match)
+  const raw = products.filter(product =>
+    normalizeLabel(product.category) === normalizeLabel(category) &&
+    normalizeLabel(product.subcategory || '') === normalizeLabel(subcategory)
+  );
+  
+  // Apply global filters/sort
+  const filteredProducts = getFilteredSortedProducts(raw);
+  
+  // Display filtered products
+  displayProductsInContainer(filteredProducts, subcategoryProductsList, true);
+}
+
+// Hide subcategory view and return to main view
+function hideSubcategoryView() {
+  const subcategorySection = document.getElementById('subcategorySection');
+  
+  // Hide subcategory section
+  subcategorySection.style.display = 'none';
+  
+  // Show main category sections
+  document.querySelectorAll('.product-list-horizontal').forEach(list => {
+    // show the product list itself
+    list.style.display = 'flex';
+    // show its section header (previous sibling)
+    const header = list.previousElementSibling;
+    if (header && header.classList && header.classList.contains('section-header')) {
+      header.style.display = 'flex';
+    }
+  });
+  
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+
+// (Emergency back button removed)
+
+// Sort subcategory products
+function sortSubcategoryProducts(sortBy) {
+  const subcategoryProductsList = document.getElementById('subcategoryProductsList');
+  const category = document.getElementById('subcategoryTitle').textContent.split(' › ')[0];
+  const subcategory = document.getElementById('subcategoryTitle').textContent.split(' › ')[1];
+  
+  const filteredProducts = products.filter(product =>
+    normalizeLabel(product.category) === normalizeLabel(category) &&
+    normalizeLabel(product.subcategory || '') === normalizeLabel(subcategory)
+  );
+  
+  const sortedProducts = sortProductsArray(filteredProducts, sortBy);
+  displayProductsInContainer(sortedProducts, subcategoryProductsList, true);
+}
+
+// Setup search functionality
+function setupSearch() {
+  const searchInput = document.getElementById('searchInput');
+  const autocompleteList = document.getElementById('autocompleteList');
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    
+    if (query.length === 0) {
+      autocompleteList.style.display = 'none';
+      return;
+    }
+    
+    // Get all categories and subcategories for autocomplete
+    const allCategories = Object.keys(categorySubcategories);
+    const allSubcategories = Object.values(categorySubcategories).flat();
+    const searchTerms = [...allCategories, ...allSubcategories];
+    
+    // Filter matching terms
+    const matches = searchTerms.filter(term => 
+      term.toLowerCase().includes(query)
+    ).slice(0, 5);
+    
+    if (matches.length > 0) {
+      autocompleteList.innerHTML = matches.map(match => 
+        `<div onclick="selectSearchTerm('${match}')">${match}</div>`
+      ).join('');
+      autocompleteList.style.display = 'block';
+    } else {
+      autocompleteList.style.display = 'none';
+    }
+  });
+  
+  // Hide autocomplete when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !autocompleteList.contains(e.target)) {
+      autocompleteList.style.display = 'none';
+    }
+  });
+}
+
+// Select search term from autocomplete
+function selectSearchTerm(term) {
+  document.getElementById('searchInput').value = term;
+  document.getElementById('autocompleteList').style.display = 'none';
+  
+  // Check if it's a main category
+  if (categorySubcategories[term]) {
+    showSubcategoryModal(term);
+  } else {
+    // It's a subcategory, find the parent category
+    for (const [category, subcategories] of Object.entries(categorySubcategories)) {
+      if (subcategories.includes(term)) {
+        showSubcategoryProducts(category, term);
+        break;
+      }
+    }
+  }
+}
+
+// Display products by category
+function displayProductsByCategory() {
+  const categories = ['Electronics', 'Furniture', 'Clothing', 'Books', 'Home & Garden', 'Sports'];
+  
+  categories.forEach(category => {
+    const categoryProducts = products.filter(p => p.category === category);
+    const filtered = getFilteredSortedProducts(categoryProducts);
+    // Map categories to existing container IDs (special-case Home & Garden -> homeList)
+    const containerIds = {
+      'Electronics': 'electronicsList',
+      'Furniture': 'furnitureList',
+      'Clothing': 'clothingList',
+      'Books': 'booksList',
+      'Home & Garden': 'homeList',
+      'Sports': 'sportsList'
+    };
+    const container = document.getElementById(containerIds[category]);
+    
+    if (container) {
+      displayProductsInContainer(filtered, container, false);
+    }
+  });
+}
+
+// Display products in a specific container
+function displayProductsInContainer(productsArray, container, isVertical = false) {
+  if (!container) return;
+  
+  if (productsArray.length === 0) {
+    container.innerHTML = '<div style="padding: 40px; text-align: center; color: #666; font-style: italic;">No products in this category yet.</div>';
+    return;
+  }
+  
+  container.innerHTML = productsArray.map(product => createProductCard(product, isVertical)).join('');
+}
+
+// Apply filter + sort on a list
+function getFilteredSortedProducts(list){
+  let arr = Array.from(list);
+  const q = (filterState.query || '').trim().toLowerCase();
+  if (q) {
+    arr = arr.filter(p =>
+      ((p.title || p.name || '').toLowerCase().includes(q)) ||
+      ((p.description || '').toLowerCase().includes(q)) ||
+      ((p.subcategory || '').toLowerCase().includes(q)) ||
+      ((p.category || '').toLowerCase().includes(q))
+    );
+  }
+  // Price
+  const minP = parseFloat(filterState.minPrice);
+  const maxP = parseFloat(filterState.maxPrice);
+  if (!isNaN(minP)) arr = arr.filter(p => Number(p.price) >= minP);
+  if (!isNaN(maxP)) arr = arr.filter(p => Number(p.price) <= maxP);
+  // Condition
+  if (filterState.condition) arr = arr.filter(p => String(p.condition) === filterState.condition);
+  // Sort
+  const reactions = productReactions || {};
+  const likesOf = (id)=> (reactions[id]?.likes || 0);
+  const favsOf = (id)=> (productStats[id]?.favorites || 0);
+  switch(filterState.sort){
+    case 'priceAsc':
+      arr.sort((a,b)=> Number(a.price)-Number(b.price)); break;
+    case 'priceDesc':
+      arr.sort((a,b)=> Number(b.price)-Number(a.price)); break;
+    case 'likes':
+      arr.sort((a,b)=> likesOf(b.id)-likesOf(a.id)); break;
+    case 'favorites':
+      arr.sort((a,b)=> favsOf(b.id)-favsOf(a.id)); break;
+    case 'newest':
+    default:
+      arr.sort((a,b)=> (Number(b.createdAt||0)) - (Number(a.createdAt||0)) );
+  }
+  return arr;
+}
+
+// Create product card HTML
+function createProductCard(product, isVertical = false) {
+  const isFavorited = favorites.has(product.id);
+  const reactions = productReactions[product.id] || { likes: 0, dislikes: 0, userReaction: null };
+  const stats = productStats[product.id] || { views: 0, favorites: 0 };
+  const title = product.title || product.name || 'Untitled';
+  const created = product.createdAt ? new Date(product.createdAt) : (product.dateAdded ? new Date(product.dateAdded) : null);
+  const dateStr = created ? created.toLocaleDateString() : '';
+  const firstImg = (product.images && product.images[0]) ? product.images[0] : 'https://via.placeholder.com/600x400?text=No+Image';
+  const safeDesc = String(product.description || '');
+
+  return `
+    <div class="product-card ${isVertical ? 'vertical' : ''}" onclick="openProductDetail?.(${product.id})">
+      <div class="product-card-header">
+        <span class="status-badge">${product.status === 'sold' ? 'SOLD' : 'FOR SALE'}</span>
+        <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+          <button class="header-btn" style="padding:4px 8px;" onclick="event.stopPropagation(); openEditProductModal(${product.id})" title="Edit">
+            <i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>
+          </button>
+          <button class="header-btn" style="padding:4px 8px;" onclick="event.stopPropagation(); deleteProduct(${product.id})" title="Delete">
+            <i class="fa-regular fa-trash-can" aria-hidden="true"></i>
+          </button>
+          <button class="favorite-btn ${isFavorited ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite(${product.id})" aria-label="${isFavorited ? 'Unfavorite' : 'Add to favorites'}">
+            ${isFavorited ? '<i class="fa-solid fa-heart" aria-hidden="true"></i>' : '<i class="fa-regular fa-heart" aria-hidden="true"></i>'}
+          </button>
+        </div>
+      </div>
+      <img src="${firstImg}" alt="${title}" class="product-thumb" />
+      <div class="product-body">
+        <div class="product-stats">
+          <div class="stat-item"><i class="fa-regular fa-eye" aria-hidden="true"></i> ${stats.views}</div>
+          <div class="stat-item"><i class="fa-solid fa-heart" aria-hidden="true"></i> ${stats.favorites}</div>
+          <div class="stat-item"><i class="fa-regular fa-calendar" aria-hidden="true"></i> ${dateStr}</div>
+        </div>
+        <h3 class="product-title">${title}</h3>
+        <div class="product-category">${product.category || ''} ${product.subcategory ? '› ' + product.subcategory : ''}</div>
+        <p class="product-desc">${safeDesc.substring(0, 100)}${safeDesc.length > 100 ? '...' : ''}</p>
+        <div class="product-reactions" onclick="event.stopPropagation()">
+          <button class="reaction-btn like-btn ${reactions.userReaction === 'like' ? 'active' : ''}" 
+                  onclick="reactToProduct(${product.id}, 'like')" aria-label="Like">
+            <i class="fa-regular fa-thumbs-up" aria-hidden="true"></i> ${reactions.likes}
+          </button>
+          <button class="reaction-btn dislike-btn ${reactions.userReaction === 'dislike' ? 'active' : ''}" 
+                  onclick="reactToProduct(${product.id}, 'dislike')" aria-label="Dislike">
+            <i class="fa-regular fa-thumbs-down" aria-hidden="true"></i> ${reactions.dislikes}
+          </button>
+        </div>
+        <div class="product-price">Rs ${Number(product.price||0).toLocaleString('en-PK')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// Toggle favorite
+function toggleFavorite(productId) {
+  const product = products.find(p => p.id == productId);
+  if (!product) return;
+  
+  if (favorites.has(productId)) {
+    favorites.delete(productId);
+    productStats[productId].favorites--;
+    showToast('Removed from favorites', 'info');
+    sfxFavoriteOff();
+  } else {
+    favorites.add(productId);
+    productStats[productId].favorites++;
+    showToast('Added to favorites', 'success');
+    sfxFavoriteOn();
+  }
+  
+  // Refresh the display
+  displayProductsByCategory();
+  
+  // If we're in subcategory view, refresh that too
+  const subcategorySection = document.getElementById('subcategorySection');
+  if (subcategorySection.style.display !== 'none') {
+    const title = document.getElementById('subcategoryTitle').textContent;
+    const [category, subcategory] = title.split(' › ');
+    // Re-render via standard path so global filters/sort apply
+    showSubcategoryProducts(category, subcategory);
+  }
+  saveState();
+}
+
+// React to product (like/dislike)
+function reactToProduct(productId, reactionType) {
+  if (!productReactions[productId]) {
+    productReactions[productId] = { likes: 0, dislikes: 0, userReaction: null };
+  }
+  
+  const reactions = productReactions[productId];
+  const currentReaction = reactions.userReaction;
+  
+  // Remove previous reaction
+  if (currentReaction === 'like') {
+    reactions.likes--;
+  } else if (currentReaction === 'dislike') {
+    reactions.dislikes--;
+  }
+  
+  // Add new reaction if different from current
+  if (currentReaction !== reactionType) {
+    if (reactionType === 'like') {
+      reactions.likes++;
+      reactions.userReaction = 'like';
+      showToast('You liked this product!', 'success');
+      sfxLike();
+    } else {
+      reactions.dislikes++;
+      reactions.userReaction = 'dislike';
+      showToast('You disliked this product', 'info');
+      sfxDislike();
+    }
+  } else {
+    reactions.userReaction = null;
+    showToast('Reaction removed', 'info');
+    sfxNavigate();
+  }
+  
+  // Refresh display
+  displayProductsByCategory();
+  
+  // If we're in subcategory view, refresh that too
+  const subcategorySection = document.getElementById('subcategorySection');
+  if (subcategorySection.style.display !== 'none') {
+    const title = document.getElementById('subcategoryTitle').textContent;
+    const [category, subcategory] = title.split(' › ');
+    const filteredProducts = products.filter(p => 
+      p.category === category && p.subcategory === subcategory
+    );
+    displayProductsInContainer(filteredProducts, document.getElementById('subcategoryProductsList'), true);
+  }
+  saveState();
+}
+
+// Sort products
+function sortProducts(category, sortBy) {
+  // Normalize incoming category keys from UI to product category tokens
+  const productKey = (str) => str.toLowerCase().replace(/ & /g, '').replace(/ /g, '');
+  const categoryMap = { home: 'homegarden' };
+  const normalizedKey = categoryMap[category] || category;
+  const categoryProducts = products.filter(p => productKey(p.category) === normalizedKey);
+  const sortedProducts = sortProductsArray(categoryProducts, sortBy);
+  
+  // Map UI key to container ID (special-case home -> homeList)
+  const listIdMap = { home: 'homeList' };
+  const listId = listIdMap[category] || (category + 'List');
+  const container = document.getElementById(listId);
+  if (container) {
+    displayProductsInContainer(sortedProducts, container, false);
+  }
+}
+
+// Sort products array
+function sortProductsArray(productsArray, sortBy) {
+  const sorted = [...productsArray];
+  
+  switch (sortBy) {
+    case 'price-low':
+      return sorted.sort((a, b) => a.price - b.price);
+    case 'price-high':
+      return sorted.sort((a, b) => b.price - a.price);
+    case 'popular':
+      return sorted.sort((a, b) => {
+        const aScore = (productStats[a.id]?.views || 0) + (productStats[a.id]?.favorites || 0);
+        const bScore = (productStats[b.id]?.views || 0) + (productStats[b.id]?.favorites || 0);
+        return bScore - aScore;
+      });
+    case 'latest':
+    default:
+      return sorted.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+  }
+}
+
+// Open product detail
+function openProductDetail(productId) {
+  const product = products.find(p => p.id == productId);
+  if (!product) return;
+  
+  // Increment view count only once per user/device
+  if (!productStats[productId]) {
+    productStats[productId] = { views: 0, favorites: 0 };
+  }
+  if (!hasViewedProduct(productId)) {
+    productStats[productId].views++;
+    markProductViewed(productId);
+    saveState();
+  }
+  
+  const modal = document.getElementById('modalProductDetail');
+  const mainImg = document.getElementById('detailMainImg');
+  const thumbs = document.getElementById('detailThumbs');
+  const content = document.getElementById('detailContent');
+  const sellerInfo = document.getElementById('sellerInfo');
+  
+  // Set main image
+  mainImg.src = product.images[0];
+  
+  // Set thumbnails
+  thumbs.innerHTML = product.images.map((img, index) => 
+    `<img src="${img}" class="detail-thumb ${index === 0 ? 'active' : ''}" 
+          onclick="changeDetailImage('${img}', this)" />`
+  ).join('');
+  
+  // Set product content
+  const reactions = productReactions[productId] || { likes: 0, dislikes: 0, userReaction: null };
+  const stats = productStats[productId] || { views: 0, favorites: 0 };
+  const isFavorited = favorites.has(productId);
+  
+  content.innerHTML = `
+    <h2>${product.name}</h2>
+    <p style="color:#777; margin:8px 0;">${product.category} ${product.subcategory ? '› ' + product.subcategory : ''}</p>
+    
+    <div class="product-stats-detail">
+      <div class="stat-item-detail">
+        <span class="stat-icon" aria-hidden="true"><i class="fa-regular fa-eye"></i></span>
+        <span class="stat-label">Views:</span>
+        <span class="stat-value">${stats.views}</span>
+      </div>
+      <div class="stat-item-detail">
+        <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-heart"></i></span>
+        <span class="stat-label">Favorites:</span>
+        <span class="stat-value">${stats.favorites}</span>
+      </div>
+      <div class="stat-item-detail">
+        <span class="stat-icon" aria-hidden="true"><i class="fa-regular fa-calendar"></i></span>
+        <span class="stat-label">Listed:</span>
+        <span class="stat-value">${new Date(product.dateAdded).toLocaleDateString()}</span>
+      </div>
+    </div>
+    
+    <div class="product-reactions-detail">
+      <button class="reaction-btn-detail like-btn-detail ${reactions.userReaction === 'like' ? 'active' : ''}" 
+              onclick="reactToProduct(${productId}, 'like'); updateProductDetailReactions(${productId})" aria-label="Like">
+        <i class="fa-regular fa-thumbs-up" aria-hidden="true"></i> Like (${reactions.likes})
+      </button>
+      <button class="reaction-btn-detail dislike-btn-detail ${reactions.userReaction === 'dislike' ? 'active' : ''}" 
+              onclick="reactToProduct(${productId}, 'dislike'); updateProductDetailReactions(${productId})" aria-label="Dislike">
+        <i class="fa-regular fa-thumbs-down" aria-hidden="true"></i> Dislike (${reactions.dislikes})
+      </button>
+      <button class="reaction-btn-detail ${isFavorited ? 'active' : ''}" 
+              onclick="toggleFavorite(${productId}); updateProductDetailFavorite(${productId})">
+        ${isFavorited ? '<i class="fa-solid fa-heart" aria-hidden="true"></i>' : '<i class="fa-regular fa-heart" aria-hidden="true"></i>'} ${isFavorited ? 'Favorited' : 'Favorite'}
+      </button>
+    </div>
+    
+    <div style="margin:16px 0;">
+      <div style="font-size:1.8rem; font-weight:800; color:var(--accent); margin-bottom:8px;">Rs ${product.price.toLocaleString('en-PK')}</div>
+      <div style="color:#666; margin-bottom:8px;"><strong>Condition:</strong> ${product.condition}</div>
+    </div>
+    
+    <div style="margin:16px 0;">
+      <h4 style="margin-bottom:8px;">Description:</h4>
+      <p style="line-height:1.5;">${product.description}</p>
+    </div>
+    <div class="rating-row" id="reviewsSummary"></div>
+    <div class="reviews-section">
+      <h4 style="margin:8px 0;">Reviews</h4>
+      <div id="reviewsList"></div>
+      <div class="add-review" id="addReviewSection">
+        <div class="star-picker" id="starPicker">
+          <button class="star-btn" data-star="1" aria-label="1 star"><i class="fa-solid fa-star"></i></button>
+          <button class="star-btn" data-star="2" aria-label="2 stars"><i class="fa-solid fa-star"></i></button>
+          <button class="star-btn" data-star="3" aria-label="3 stars"><i class="fa-solid fa-star"></i></button>
+          <button class="star-btn" data-star="4" aria-label="4 stars"><i class="fa-solid fa-star"></i></button>
+          <button class="star-btn" data-star="5" aria-label="5 stars"><i class="fa-solid fa-star"></i></button>
+        </div>
+        <textarea id="reviewText" placeholder="Share your experience..."></textarea>
+        <button class="btn" onclick="submitReview(${productId})">Submit Review</button>
+      </div>
+    </div>
+  `;
+  
+  // Set seller info
+  const sellerUser = (typeof findUserByEmail === 'function') ? findUserByEmail(product.sellerEmail) : null;
+  const verifiedBadge = sellerUser && sellerUser.verified ? '<span class="verified-badge" title="Verified seller">Verified</span>' : '';
+  sellerInfo.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+        ${product.seller.charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <div style="font-weight:600; display:flex; align-items:center; gap:8px;">${product.seller} ${verifiedBadge}</div>
+        <div style="font-size:0.9rem; color:#666;">${product.sellerEmail}</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn" onclick="openMessageModal(${productId})"><i class="fa-regular fa-message" aria-hidden="true"></i> Message Seller</button>
+      <button class="btn" style="background:#6c757d;" onclick="contactSeller('${product.sellerEmail}', '${product.name}')"><i class="fa-regular fa-envelope" aria-hidden="true"></i> Email Seller</button>
+    </div>
+  `;
+  
+  // Initialize reviews UI
+  try { initReviewStarPicker(); renderReviews(productId); } catch(_) {}
+  
+  modal.style.display = 'flex';
+}
+
+// Update product detail reactions after user interaction
+function updateProductDetailReactions(productId) {
+  const reactions = productReactions[productId] || { likes: 0, dislikes: 0, userReaction: null };
+  
+  // Update the reaction buttons in the detail view
+  const likeBtn = document.querySelector('.like-btn-detail');
+  const dislikeBtn = document.querySelector('.dislike-btn-detail');
+  
+  if (likeBtn) {
+    likeBtn.innerHTML = `<i class="fa-solid fa-thumbs-up" aria-hidden="true"></i> Like (${reactions.likes})`;
+    likeBtn.className = `reaction-btn-detail like-btn-detail ${reactions.userReaction === 'like' ? 'active' : ''}`;
+  }
+  
+  if (dislikeBtn) {
+    dislikeBtn.innerHTML = `<i class="fa-solid fa-thumbs-down" aria-hidden="true"></i> Dislike (${reactions.dislikes})`;
+    dislikeBtn.className = `reaction-btn-detail dislike-btn-detail ${reactions.userReaction === 'dislike' ? 'active' : ''}`;
+  }
+}
+
+// Update product detail favorite after user interaction
+function updateProductDetailFavorite(productId) {
+  const isFavorited = favorites.has(productId);
+  const favoriteBtn = document.querySelector('.reaction-btn-detail:not(.like-btn-detail):not(.dislike-btn-detail)');
+  
+  if (favoriteBtn) {
+    favoriteBtn.innerHTML = `${isFavorited ? '<i class="fa-solid fa-heart" aria-hidden="true"></i>' : '<i class=\"fa-regular fa-heart\" aria-hidden=\"true\"></i>'} ${isFavorited ? 'Favorited' : 'Favorite'}`;
+    favoriteBtn.className = `reaction-btn-detail ${isFavorited ? 'active' : ''}`;
+  }
+  
+  // Update stats display
+  const stats = productStats[productId] || { views: 0, favorites: 0 };
+  const favoritesStatValue = document.querySelector('.stat-item-detail:nth-child(2) .stat-value');
+  if (favoritesStatValue) {
+    favoritesStatValue.textContent = stats.favorites;
+  }
+}
+
+// Change detail image
+function changeDetailImage(imgSrc, thumbElement) {
+  document.getElementById('detailMainImg').src = imgSrc;
+  
+  // Update active thumbnail
+  document.querySelectorAll('.detail-thumb').forEach(thumb => thumb.classList.remove('active'));
+  thumbElement.classList.add('active');
+}
+
+// Contact seller
+function contactSeller(email, productName) {
+  const subject = `Inquiry about: ${productName}`;
+  const body = `Hi,\n\nI'm interested in your product "${productName}" listed on Buy&Sell Marketplace. Could you please provide more details?\n\nThanks!`;
+  
+  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  showToast('Opening email client...', 'info');
+}
+
+// --- Toast helper ---
+function showToast(message, type = 'info', timeout = 3000) {
+  // Ensure container
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.style.position = 'fixed';
+    container.style.right = '20px';
+    container.style.bottom = '20px';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '8px';
+    container.style.zIndex = '2000';
+    document.body.appendChild(container);
+  }
+  const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  // Override fixed positioning so container stacks them
+  toast.style.position = 'relative';
+  toast.style.right = '0';
+  toast.style.bottom = '0';
+  toast.innerHTML = `
+    <span class="toast-icon"><i class="fa-solid ${icons[type] || icons.info}" aria-hidden="true"></i></span>
+    <div class="toast-message">${message}</div>
+    <button class="toast-close" aria-label="Close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  container.appendChild(toast);
+  if (timeout > 0) setTimeout(() => toast.remove(), timeout);
+}
+
+// --- Reviews helpers ---
+function makeStarsHtml(rating = 0, outOf = 5) {
+  const r = Math.max(0, Math.min(outOf, Math.round(rating)));
+  let html = '<span class="stars" aria-hidden="true">';
+  for (let i = 1; i <= outOf; i++) {
+    html += `<i class="fa-${i <= r ? 'solid' : 'regular'} fa-star"></i>`;
+  }
+  html += '</span>';
+  return html;
+}
+
+function initReviewStarPicker() {
+  const picker = document.getElementById('starPicker');
+  if (!picker) return;
+  picker.dataset.rating = picker.dataset.rating || '0';
+  picker.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const star = Number(btn.dataset.star || '0');
+      picker.dataset.rating = String(star);
+      picker.querySelectorAll('.star-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.star) <= star));
+    });
+  });
+}
+
+function renderReviews(productId) {
+  const listEl = document.getElementById('reviewsList');
+  const summaryEl = document.getElementById('reviewsSummary');
+  const addSection = document.getElementById('addReviewSection');
+  if (!listEl || !summaryEl) return;
+  const arr = reviews[productId] || [];
+  const avg = arr.length ? arr.reduce((s, r) => s + (r.rating || 0), 0) / arr.length : 0;
+  summaryEl.innerHTML = `${makeStarsHtml(avg)} <span class="rating-count">${arr.length} review${arr.length!==1?'s':''} • ${avg.toFixed(1)}/5</span>`;
+  if (arr.length === 0) {
+    listEl.innerHTML = '<p style="color:#666; font-style:italic;">No reviews yet. Be the first to review.</p>';
+  } else {
+    listEl.innerHTML = arr.map(r => {
+      const when = new Date(r.date || Date.now()).toLocaleString();
+      return `
+        <div class="review-item">
+          <div class="review-meta">${makeStarsHtml(r.rating)}<span>by ${r.name || r.email}</span><span>• ${when}</span></div>
+          <div class="review-text">${(r.text || '').replace(/</g,'&lt;')}</div>
+        </div>
+      `;
+    }).join('');
+  }
+  if (!currentUser && addSection) {
+    addSection.innerHTML = '<p style="color:#666;">Please log in to write a review.</p>';
+  }
+}
+
+function submitReview(productId) {
+  if (!currentUser) { openLoginModal(); return; }
+  const picker = document.getElementById('starPicker');
+  const txtEl = document.getElementById('reviewText');
+  const rating = picker ? Number(picker.dataset.rating || '0') : 0;
+  const text = (txtEl?.value || '').trim();
+  if (!rating) { showToast('Please select a star rating', 'warning'); return; }
+  const entry = { by: currentUser.email, email: currentUser.email, name: currentUser.name || currentUser.email, rating, text, date: new Date().toISOString() };
+  if (!reviews[productId]) reviews[productId] = [];
+  reviews[productId].unshift(entry);
+  saveState();
+  renderReviews(productId);
+  if (txtEl) txtEl.value = '';
+  if (picker) { picker.dataset.rating = '0'; picker.querySelectorAll('.star-btn').forEach(b => b.classList.remove('active')); }
+  showToast('Review submitted', 'success');
+}
+
+// --- Messaging helpers ---
+function getConversationKey(productId, aEmail, bEmail) {
+  const [x, y] = [aEmail, bEmail].sort();
+  return `${productId}|${x}|${y}`;
+}
+
+function openMessageModal(productId) {
+  if (!currentUser) { openLoginModal(); return; }
+  const product = products.find(p => p.id == productId);
+  if (!product) return;
+  activeConversation.productId = productId;
+  activeConversation.with = product.sellerEmail;
+  activeConversation.key = getConversationKey(productId, currentUser.email, product.sellerEmail);
+  if (!conversations[activeConversation.key]) conversations[activeConversation.key] = [];
+  ensureConvMeta(activeConversation.key);
+  // mark as read for me when opening the modal
+  markRead(activeConversation.key, currentUser.email);
+  const modal = document.getElementById('modalMessage');
+  if (modal) modal.style.display = 'flex';
+  renderChatThread();
+}
+
+function renderChatThread() {
+  const thread = document.getElementById('chatThread');
+  if (!thread || !activeConversation.key) return;
+  const msgs = conversations[activeConversation.key] || [];
+  thread.innerHTML = msgs.map(m => {
+    const cls = m.from === (currentUser && currentUser.email) ? 'me' : 'them';
+    const when = new Date(m.ts || Date.now()).toLocaleTimeString();
+    return `<div class="msg ${cls}"><div>${(m.text||'').replace(/</g,'&lt;')}</div><div class="msg-meta">${when}</div></div>`;
+  }).join('');
+  thread.scrollTop = thread.scrollHeight;
+}
+
+  function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const text = (input?.value || '').trim();
+    if (!text || !activeConversation.key || !currentUser) return;
+    const to = activeConversation.with;
+    const msg = { from: currentUser.email, to, text, ts: Date.now() };
+    conversations[activeConversation.key].push(msg);
+    ensureConvMeta(activeConversation.key);
+    incrementUnreadFor(activeConversation.key, to);
+    saveState();
+    if (input) input.value = '';
+    renderChatThread();
+  }
+
+  // Messaging meta helpers (unread + avatars)
+  function ensureConvMeta(key){
+    if (!conversationsMeta[key]) conversationsMeta[key] = { unread:{}, lastReadTs:{} };
+    if (currentUser && conversationsMeta[key].unread[currentUser.email] == null) conversationsMeta[key].unread[currentUser.email] = 0;
+  }
+  function markRead(key, email){
+    try{
+      ensureConvMeta(key);
+      conversationsMeta[key].unread[email] = 0;
+      conversationsMeta[key].lastReadTs[email] = Date.now();
+      saveState();
+      updateMessagesBadge();
+    }catch(_){/* noop */}
+  }
+  function incrementUnreadFor(key, email){
+    try{
+      ensureConvMeta(key);
+      const cur = conversationsMeta[key].unread[email] || 0;
+      conversationsMeta[key].unread[email] = cur + 1;
+      updateMessagesBadge();
+    }catch(_){/* noop */}
+  }
+  function getUserAvatarHtml(email, size=''){
+    try{
+      const u = (typeof findUserByEmail === 'function') ? findUserByEmail(email) : null;
+      const pic = u && (u.profilePic || u.avatar || u.photoUrl);
+      if (pic) return `<span class="avatar ${size}"><img src="${pic}" alt="${email}" /></span>`;
+      const ch = String((u?.name || email || '?').trim()).charAt(0).toUpperCase() || '?';
+      return `<span class="avatar ${size}">${ch}</span>`;
+    }catch(_){ return `<span class="avatar ${size}">?</span>`; }
+  }
+
+  // Header Messages badge updater
+  function totalUnreadForCurrent(){
+    if (!currentUser) return 0;
+    const me = currentUser.email;
+    let sum = 0;
+    Object.keys(conversationsMeta || {}).forEach(k => {
+      const m = conversationsMeta[k];
+      if (m && m.unread && typeof m.unread[me] === 'number') sum += m.unread[me];
+    });
+    return sum;
+  }
+  function updateMessagesBadge(){
+    const btn = document.getElementById('messagesBtn');
+    const badge = document.getElementById('messagesBadge');
+    if (!btn || !badge){ return; }
+    if (!currentUser){ badge.style.display = 'none'; return; }
+    const count = totalUnreadForCurrent();
+    if (count > 0){
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.style.display = 'inline-block';
+      if (!document._baseTitle) document._baseTitle = document.title.replace(/^\(\d+\+?\)\s*/, '');
+      document.title = `(${count > 99 ? '99+' : count}) ${document._baseTitle}`;
+    } else {
+      badge.style.display = 'none';
+      if (!document._baseTitle) document._baseTitle = document.title.replace(/^\(\d+\+?\)\s*/, '');
+      document.title = document._baseTitle;
+    }
+  }
+
+// --- Messages Center (Conversations list + chat) ---
+function parseConversationKey(key){
+  // key format: productId|emailA|emailB
+  const [pid, a, b] = String(key).split('|');
+  return { productId: Number(pid), a, b };
+}
+
+function listUserConversations(){
+  if (!currentUser) return [];
+  const me = String(currentUser.email).toLowerCase();
+  const items = [];
+  Object.keys(conversations || {}).forEach(key => {
+    const { productId, a, b } = parseConversationKey(key);
+    if (!a || !b) return;
+    if (a.toLowerCase() !== me && b.toLowerCase() !== me) return;
+    const other = a.toLowerCase() === me ? b : a;
+    const prod = products.find(p => p.id == productId);
+    const msgs = conversations[key] || [];
+    const last = msgs[msgs.length - 1] || null;
+    items.push({ key, productId, other, productName: prod ? prod.name : 'Unknown Product', last });
+  });
+  // Sort by last message time desc
+  items.sort((x,y)=> (y.last?.ts||0) - (x.last?.ts||0));
+  return items;
+}
+
+function renderConversationsList(filter = ''){
+  const listEl = document.getElementById('convItems');
+  if (!listEl) return;
+  const q = String(filter || '').toLowerCase();
+  const items = listUserConversations().filter(it =>
+    it.other.toLowerCase().includes(q) ||
+    String(it.productName||'').toLowerCase().includes(q)
+  );
+  if (items.length === 0){
+    listEl.innerHTML = '<div style="color:#666; text-align:center; padding:12px;">No conversations</div>';
+    return;
+  }
+  listEl.innerHTML = items.map(it => {
+    const previewFull = (it.last?.text || '');
+    const preview = previewFull.length > 80 ? (previewFull.slice(0, 80) + '…') : previewFull;
+    const when = it.last?.ts ? new Date(it.last.ts).toLocaleString() : '';
+    const meta = conversationsMeta[it.key] || { unread:{} };
+    const unread = currentUser ? (meta.unread?.[currentUser.email] || 0) : 0;
+    const badge = unread > 0 ? `<span class="badge-unread" title="Unread">${unread}</span>` : '';
+    const avatar = getUserAvatarHtml(it.other, 'sm');
+    return `
+      <div class="conv-item" onclick="selectConversation('${it.key}')">
+        ${avatar}
+        <div class="conv-main" style="min-width:0;">
+          <div class="conv-top-row">
+            <div class="conv-title text-ellipsis" title="${it.productName}">${it.productName}</div>
+            <div class="conv-meta"><span>${when}</span>${badge}</div>
+          </div>
+          <div class="conv-sub text-ellipsis">with ${it.other}</div>
+          <div class="conv-sub text-ellipsis">${preview.replace(/</g,'&lt;')}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCenterThread(){
+  const thread = document.getElementById('convThread');
+  const header = document.getElementById('convHeader');
+  if (!thread || !header) return;
+  if (!activeConversation.key){
+    header.innerHTML = '<div style="color:#666;">Select a conversation</div>';
+    thread.innerHTML = '';
+    return;
+  }
+  const { productId, a, b } = parseConversationKey(activeConversation.key);
+  const other = activeConversation.with || (a === currentUser.email ? b : a);
+  const prod = products.find(p => p.id == productId);
+  const vb = getVerifiedBadge(other);
+  const left = `${getUserAvatarHtml(other)} <div><strong>${prod ? prod.name : 'Unknown Product'}</strong><div class="conv-sub">with ${other} ${vb}</div></div>`;
+  header.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px;">${left}</div>
+    <div class="conv-actions">
+      <button class="btn" style="background:#6c757d;" onclick="clearConversation()"><i class="fa-solid fa-broom" aria-hidden="true"></i> Clear</button>
+      <button class="btn" style="background:#6c757d;" onclick="toggleBlockCurrentOther()"><i class="fa-solid fa-user-slash" aria-hidden="true"></i> ${isBlocked(activeConversation.with)?'Unblock':'Block'}</button>
+      <button class="btn" style="background:#ffc107; color:#333;" onclick="reportCurrentOther()"><i class="fa-solid fa-flag" aria-hidden="true"></i> Report</button>
+      <button class="btn" style="background:#dc3545;" onclick="deleteConversation()"><i class="fa-solid fa-trash" aria-hidden="true"></i> Delete</button>
+    </div>`;
+  const msgs = conversations[activeConversation.key] || [];
+  let html = msgs.map(m => {
+    const cls = m.from === currentUser.email ? 'me' : 'them';
+    const when = new Date(m.ts || Date.now()).toLocaleTimeString();
+    if (m.type === 'image' && m.src){
+      return `<div class="msg ${cls}"><div><img src="${m.src}" alt="image" style="max-width:60vw; max-height:50vh; border-radius:8px;" /></div><div class="msg-meta">${when}</div></div>`;
+    }
+    return `<div class="msg ${cls}"><div>${(m.text||'').replace(/</g,'&lt;')}</div><div class="msg-meta">${when}</div></div>`;
+  }).join('');
+  // Seen receipts for my last message
+  const lastFromMe = [...msgs].reverse().find(x => x.from === (currentUser && currentUser.email));
+  const meta = conversationsMeta[activeConversation.key] || { lastReadTs:{} };
+  const otherReadTs = meta.lastReadTs ? meta.lastReadTs[other] : 0;
+  if (lastFromMe && otherReadTs && otherReadTs >= (lastFromMe.ts || 0)){
+    html += `<div class="msg-meta" style="text-align:right; color:#6c757d; font-size:12px; padding:4px 8px;">Seen</div>`;
+  }
+  thread.innerHTML = html;
+  thread.scrollTop = thread.scrollHeight;
+  // mark read once rendered
+  markRead(activeConversation.key, currentUser.email);
+  showTypingIndicator();
+  enforceBlockStateUI();
+}
+
+  function selectConversation(key){
+    if (!currentUser) return;
+    const { productId, a, b } = parseConversationKey(key);
+    const me = currentUser.email;
+    const other = a === me ? b : a;
+    activeConversation.key = key;
+    activeConversation.productId = productId;
+    activeConversation.with = other;
+    if (!conversations[key]) conversations[key] = [];
+    ensureConvMeta(key);
+    markRead(key, currentUser.email);
+    renderCenterThread();
+  }
+
+  function openMessagesCenter(){
+    if (!currentUser) { openLoginModal(); return; }
+    const modal = document.getElementById('modalMessages');
+    const search = document.getElementById('convSearch');
+    if (modal) modal.style.display = 'flex';
+    renderConversationsList('');
+    renderCenterThread();
+    if (search){
+      search.oninput = () => renderConversationsList(search.value);
+    }
+    updateMessagesBadge();
+    // wire attachment
+    const attach = document.getElementById('convAttach');
+    if (attach) attach.onchange = handleAttachmentChange;
+    // typing indicator refresh loop
+    if (!window._typingTimer){
+      window._typingTimer = setInterval(() => { try{ showTypingIndicator(); updatePresenceTick(); }catch(_){} }, 1000);
+    }
+    // presence heartbeat
+    if (!window._presenceTimer){
+      window._presenceTimer = setInterval(() => { try{ updatePresenceTick(true); }catch(_){} }, 30000);
+    }
+  }
+
+  // Settings modal
+  function openSettingsModal(){
+    if (!currentUser){ openLoginModal(); return; }
+    const modal = document.getElementById('modalSettings');
+    if (modal) modal.style.display = 'flex';
+    const cb = document.getElementById('verifiedToggle');
+    if (cb){
+      cb.checked = !!(currentUser && currentUser.verified);
+      cb.onchange = () => {
+        const val = !!cb.checked;
+        if (currentUser){ currentUser.verified = val; }
+        try{ const u = findUserByEmail(currentUser.email); if (u) u.verified = val; }catch(_){}
+        saveState();
+        try{ renderCenterThread(); }catch(_){}
+        showToast('Settings saved', 'success');
+      };
+    }
+  }
+
+  function sendCenterChatMessage(){
+    if (!currentUser || !activeConversation.key) return;
+    const input = document.getElementById('convInput');
+    const text = (input?.value || '').trim();
+    if (isBlocked(activeConversation.with)) { showToast('You blocked this user. Unblock to send messages.', 'warning'); return; }
+    if (!text) return;
+    const to = activeConversation.with;
+    const msg = { from: currentUser.email, to, text, ts: Date.now() };
+    conversations[activeConversation.key].push(msg);
+    ensureConvMeta(activeConversation.key);
+    incrementUnreadFor(activeConversation.key, to);
+    saveState();
+    input.value = '';
+    renderCenterThread();
+    // stop typing after send
+    setTyping(activeConversation.key, currentUser.email, 0);
+  }
+
+  // Typing indicators
+  function setTyping(key, email, ms = 3000){
+    ensureConvMeta(key);
+    if (!conversationsMeta[key].typing) conversationsMeta[key].typing = {};
+    conversationsMeta[key].typing[email] = Date.now() + Math.max(0, ms);
+  }
+  function handleTypingKey(e){
+    if (!currentUser || !activeConversation.key) return;
+    if (e.key === 'Enter') { sendCenterChatMessage(); return; }
+    if (isBlocked(activeConversation.with)) { return; }
+    setTyping(activeConversation.key, currentUser.email, 3000);
+    showTypingIndicator();
+  }
+  function showTypingIndicator(){
+    const el = document.getElementById('typingIndicator');
+    if (!el || !activeConversation.key || !currentUser) return;
+    const { a, b } = parseConversationKey(activeConversation.key);
+    const me = currentUser.email;
+    const other = a === me ? b : a;
+    const meta = conversationsMeta[activeConversation.key] || {};
+    const typing = (meta.typing || {})[other] || 0;
+    el.textContent = typing > Date.now() ? `${other} is typing…` : '';
+  }
+
+  // Image attachments
+  function handleAttachmentChange(ev){
+    const file = ev && ev.target && ev.target.files && ev.target.files[0];
+    if (!file || !currentUser || !activeConversation.key) return;
+    if (isBlocked(activeConversation.with)) { showToast('You blocked this user. Unblock to send attachments.', 'warning'); try{ ev.target.value=''; }catch(_){}; return; }
+    if (!file.type.startsWith('image/')){ showToast('Only image files are supported for now.', 'warning'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const to = activeConversation.with;
+      const msg = { from: currentUser.email, to, ts: Date.now(), type: 'image', src: String(reader.result||'') };
+      conversations[activeConversation.key].push(msg);
+      ensureConvMeta(activeConversation.key);
+      incrementUnreadFor(activeConversation.key, to);
+      saveState();
+      renderCenterThread();
+      try{ ev.target.value = ''; }catch(_){}
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Presence & trust helpers
+  function updatePresenceTick(save=false){
+    if (!currentUser) return;
+    currentUser.lastActive = Date.now();
+    try { if (save) saveState(); } catch(_){}
+  }
+  function isUserOnline(email){
+    const u = (typeof findUserByEmail === 'function') ? findUserByEmail(email) : null;
+    const ts = u && u.lastActive ? Number(u.lastActive) : 0;
+    return ts && (Date.now() - ts) < 2*60*1000; // 2 minutes window
+  }
+  function formatLastSeen(ts){
+    if (!ts) return 'offline';
+    const diff = Date.now() - ts;
+    if (diff < 60*1000) return 'last seen just now';
+    if (diff < 60*60*1000) return `last seen ${Math.floor(diff/60000)}m ago`;
+    if (diff < 24*60*60*1000) return `last seen ${Math.floor(diff/3600000)}h ago`;
+    return new Date(ts).toLocaleString();
+  }
+  function getPresenceHtml(email){
+    return isUserOnline(email) ? '<span style="color:#28a745;">Online</span>' : `<span style="color:#6c757d;">${formatLastSeen(((findUserByEmail(email)||{}).lastActive)||0)}</span>`;
+  }
+  function getVerifiedBadge(email){
+    const u = (typeof findUserByEmail === 'function') ? findUserByEmail(email) : null;
+    return (u && u.verified) ? '<span class="verified-badge" title="Verified user">Verified</span>' : '';
+  }
+  function isBlocked(email){
+    const list = (currentUser && currentUser.blocked) ? currentUser.blocked : [];
+    return list.includes(email);
+  }
+  function toggleBlockCurrentOther(){
+    if (!currentUser || !activeConversation.with) return;
+    const email = activeConversation.with;
+    currentUser.blocked = Array.isArray(currentUser.blocked) ? currentUser.blocked : [];
+    const idx = currentUser.blocked.indexOf(email);
+    if (idx >= 0) {
+      currentUser.blocked.splice(idx,1);
+      showToast('User unblocked', 'success');
+    } else {
+      currentUser.blocked.push(email);
+      showToast('User blocked', 'success');
+    }
+    // reflect into users array if present
+    try{
+      const u = findUserByEmail(currentUser.email);
+      if (u) u.blocked = currentUser.blocked;
+    }catch(_){}
+    saveState();
+    renderCenterThread();
+  }
+  function reportCurrentOther(){
+    if (!currentUser || !activeConversation.with) return;
+    const email = activeConversation.with;
+    window._reports = window._reports || [];
+    window._reports.push({ by: currentUser.email, about: email, ts: Date.now(), key: activeConversation.key });
+    try{ localStorage.setItem('reports', JSON.stringify(window._reports)); }catch(_){}
+    showToast('User reported. Thanks for helping keep the community safe.', 'info');
+  }
+  function enforceBlockStateUI(){
+    const blocked = isBlocked(activeConversation.with||'');
+    const input = document.getElementById('convInput');
+    const sendBtn = document.querySelector('.conv-chat .chat-input .btn:last-child');
+    const attachBtn = document.querySelector('.conv-chat .chat-input .btn:nth-last-child(2)');
+    if (input) { input.disabled = blocked; input.placeholder = blocked ? 'You blocked this user' : 'Type your message...'; }
+    if (sendBtn) sendBtn.disabled = blocked;
+    if (attachBtn) attachBtn.disabled = blocked;
+  }
+
+  function clearConversation(){
+    if (!activeConversation.key) return;
+    conversations[activeConversation.key] = [];
+    ensureConvMeta(activeConversation.key);
+    conversationsMeta[activeConversation.key].unread[currentUser.email] = 0;
+    saveState();
+    renderCenterThread();
+    renderConversationsList(document.getElementById('convSearch')?.value||'');
+    showToast('Conversation cleared', 'success');
+  }
+
+  function deleteConversation(){
+    if (!activeConversation.key) return;
+    const key = activeConversation.key;
+    try{ delete conversations[key]; }catch(_){ conversations[key] = undefined; }
+    try{ delete conversationsMeta[key]; }catch(_){ conversationsMeta[key] = undefined; }
+    saveState();
+    // reset active convo
+    activeConversation = { productId: null, with: null, key: null };
+    renderConversationsList(document.getElementById('convSearch')?.value||'');
+    renderCenterThread();
+    showToast('Conversation deleted', 'success');
+  }
+
+// Login functionality
+function openLoginModal() {
+  document.getElementById('modalLogin').style.display = 'flex';
+}
+
+function switchToRegister() {
+  closeModal('modalLogin');
+  document.getElementById('modalRegister').style.display = 'flex';
+}
+
+function switchToLogin() {
+  closeModal('modalRegister');
+  document.getElementById('modalLogin').style.display = 'flex';
+}
+
+function performLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  if (!email || !password) {
+    showToast('Please fill in all fields', 'error');
+    return;
+  }
+  // Enforce login only for registered users with matching password
+  const user = findUserByEmail(email);
+  if (!user) {
+    showToast('Account not found. Please register first.', 'error');
+    return;
+  }
+  if (String(user.password || '') !== String(password)) {
+    showToast('Incorrect password.', 'error');
+    return;
+  }
+  currentUser = { ...user };
+  updateLoginState();
+  saveState();
+  closeModal('modalLogin');
+  showToast(`Welcome back, ${currentUser.name}!`, 'success');
+}
+
+function performRegister() {
+  const name = document.getElementById('regName').value;
+  const email = document.getElementById('regEmail').value;
+  const password = document.getElementById('regPassword').value;
+  
+  if (!name || !email || !password) {
+    showToast('Please fill in all fields', 'error');
+    return;
+  }
+  // Prevent duplicate accounts
+  if (findUserByEmail(email)) {
+    showToast('An account with this email already exists. Please log in.', 'warning');
+    switchToLogin();
+    return;
+  }
+  const newUser = {
+    name: name.trim(),
+    email: String(email).toLowerCase().trim(),
+    password: String(password), // For a production app, hash the password
+    phone: '',
+    location: '',
+    profilePic: ''
+  };
+  users.push(newUser);
+  currentUser = { ...newUser };
+  updateLoginState();
+  saveState();
+  closeModal('modalRegister');
+  showToast(`Welcome to Buy&Sell, ${currentUser.name}!`, 'success');
+}
+
+function updateLoginState() {
+  document.getElementById('loggedInUser').style.display = 'flex';
+  document.getElementById('displayName').textContent = currentUser.name;
+  document.getElementById('logoutBtn').style.display = 'block';
+  document.getElementById('loginBtn').style.display = 'none';
+  const mb = document.getElementById('messagesBtn'); if (mb) mb.style.display = 'inline-block';
+  renderHeaderAvatar();
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('loggedInUser').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+  document.getElementById('loginBtn').style.display = 'block';
+  const mb = document.getElementById('messagesBtn'); if (mb) mb.style.display = 'none';
+  try { localStorage.removeItem('currentUser'); } catch (e) {}
+  showToast('Logged out successfully', 'info');
+}
+
+function checkLoginStatus() {
+  // Simulate checking if user is logged in (in real app, check token/session)
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    const parsed = JSON.parse(savedUser);
+    const user = findUserByEmail(parsed.email);
+    if (user) {
+      currentUser = { ...user };
+      updateLoginState();
+    } else {
+      // Stale currentUser, clear it to enforce proper login
+      try { localStorage.removeItem('currentUser'); } catch (e) {}
+      currentUser = null;
+    }
+  }
+}
+
+// Profile functionality
+function openProfileModal() {
+  if (!currentUser) {
+    openLoginModal();
+    return;
+  }
+  
+  const modal = document.getElementById('modalProfile');
+  const profileInfo = document.getElementById('profileInfo');
+  const userProductsContainer = document.getElementById('userProductsContainer');
+  
+  // Set profile picture
+  document.getElementById('profilePicPreview').src = currentUser.profilePic || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI2MCIgZmlsbD0iI2Y1NzcxZiIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDBweCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfkbQ8L3RleHQ+Cjwvc3ZnPg==';
+  
+  // Set profile info
+  profileInfo.innerHTML = `
+    <label for="profileName">Name:</label>
+    <input type="text" id="profileName" value="${currentUser.name}" />
+    <label for="profileEmail">Email:</label>
+    <input type="text" id="profileEmail" value="${currentUser.email}" readonly style="background:#f5f5f5;" />
+    <label for="profilePhone">Phone (optional):</label>
+    <input type="text" id="profilePhone" value="${currentUser.phone || ''}" placeholder="Your phone number" />
+    <label for="profileLocation">Location (optional):</label>
+    <input type="text" id="profileLocation" value="${currentUser.location || ''}" placeholder="Your city/area" />
+    <button class="btn" onclick="updateProfile()" style="margin-top:12px;">Update Profile</button>
+  `;
+  
+  // Show user products
+  const userProducts = products.filter(p => p.sellerEmail === currentUser.email);
+  if (userProducts.length === 0) {
+    userProductsContainer.innerHTML = '<p style="color:#666; font-style:italic;">You haven\'t listed any products yet.</p>';
+  } else {
+    userProductsContainer.innerHTML = userProducts.map(product => `
+      <div class="user-product-item">
+        <img src="${product.images[0]}" alt="${product.name}" class="user-product-thumb" />
+        <div class="user-product-info">
+          <h4 class="user-product-name">${product.name}</h4>
+          <div class="user-product-category">${product.category} | Rs ${product.price.toLocaleString('en-PK')}</div>
+        </div>
+        <div class="user-product-buttons">
+          <button class="btn-edit" onclick="editProduct(${product.id})">Edit</button>
+          <button class="btn-delete" onclick="deleteProduct(${product.id})">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  modal.style.display = 'flex';
+}
+
+function previewProfilePic() {
+  const file = document.getElementById('profilePicInput').files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('profilePicPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function updateProfile() {
+  const name = document.getElementById('profileName').value;
+  const phone = document.getElementById('profilePhone').value;
+  const location = document.getElementById('profileLocation').value;
+  
+  if (!name.trim()) {
+    showToast('Name is required', 'error');
+    return;
+  }
+  
+  currentUser.name = name;
+  currentUser.phone = phone;
+  currentUser.location = location;
+  
+  // Update profile pic if changed
+  const profilePicSrc = document.getElementById('profilePicPreview').src;
+  if (profilePicSrc && !profilePicSrc.includes('data:image/svg+xml')) {
+    currentUser.profilePic = profilePicSrc;
+  }
+  
+  // Update display name in header
+  document.getElementById('displayName').textContent = currentUser.name;
+  // Update header avatar based on currentUser.profilePic
+  renderHeaderAvatar();
+  
+  // Persist to users list and currentUser in localStorage
+  upsertCurrentUserIntoUsers();
+  saveState();
+  
+  showToast('Profile updated successfully!', 'success');
+}
+
+// Render/update the avatar in the header (profile picture if available, otherwise default icon)
+function renderHeaderAvatar() {
+  const container = document.getElementById('loggedInUser');
+  if (!container) return;
+  const existing = container.querySelector('.userIcon, img.profilePic');
+  let avatarEl;
+  if (currentUser && currentUser.profilePic) {
+    avatarEl = document.createElement('img');
+    avatarEl.className = 'profilePic';
+    avatarEl.src = currentUser.profilePic;
+    avatarEl.alt = currentUser.name || 'Profile';
+    avatarEl.style.width = '32px';
+    avatarEl.style.height = '32px';
+    avatarEl.style.borderRadius = '50%';
+    avatarEl.style.objectFit = 'cover';
+  } else {
+    avatarEl = document.createElement('div');
+    avatarEl.className = 'userIcon';
+    avatarEl.textContent = '👤';
+  }
+  if (existing) {
+    container.replaceChild(avatarEl, existing);
+  } else {
+    container.insertBefore(avatarEl, container.firstChild);
+  }
+}
+
+// Product management
+function openAddProductModal() {
+  if (!currentUser) {
+    openLoginModal();
+    return;
+  }
+  
+  // Reset form
+  document.getElementById('addProductTitle').textContent = editingProductId ? 'Edit Product' : 'Add New Product';
+  document.getElementById('submitProductBtn').textContent = editingProductId ? 'Update Product' : 'Add Product';
+  
+  if (!editingProductId) {
+    clearProductForm();
+  }
+  
+  document.getElementById('modalAddProduct').style.display = 'flex';
+}
+
+function clearProductForm() {
+  document.getElementById('productName').value = '';
+  document.getElementById('productCategory').value = '';
+  populateSubcategoryOptions('');
+  const subSel = document.getElementById('productSubcategory');
+  if (subSel) subSel.value = '';
+  document.getElementById('productDescription').value = '';
+  document.getElementById('productPrice').value = '';
+  document.getElementById('productCondition').value = '';
+  document.getElementById('productImages').value = '';
+  document.getElementById('imagePreviewRow').innerHTML = '';
+  tempSelectedImages = [];
+  editingProductId = null;
+}
+
+function editProduct(productId) {
+  const product = products.find(p => p.id == productId);
+  if (!product) return;
+  
+  editingProductId = productId;
+  
+  // Fill form with product data
+  document.getElementById('productName').value = product.name;
+  document.getElementById('productCategory').value = product.category;
+  // Populate and set subcategory
+  populateSubcategoryOptions(product.category, product.subcategory || '');
+  document.getElementById('productDescription').value = product.description;
+  document.getElementById('productPrice').value = product.price;
+  document.getElementById('productCondition').value = product.condition;
+  
+  // Show existing images
+  const previewRow = document.getElementById('imagePreviewRow');
+  tempSelectedImages = Array.isArray(product.images) ? [...product.images] : [];
+  previewRow.innerHTML = tempSelectedImages.map(img => 
+    `<img src="${img}" class="img-preview" />`
+  ).join('');
+  
+  openAddProductModal();
+}
+
+function deleteProduct(productId) {
+  if (!confirm('Are you sure you want to delete this product?')) return;
+  
+  products = products.filter(p => p.id != productId);
+  
+  // Clean up related data
+  delete productStats[productId];
+  delete productReactions[productId];
+  favorites.delete(productId);
+  
+  displayProductsByCategory();
+  showToast('Product deleted successfully', 'success');
+  saveState();
+  
+  // Refresh profile modal if open
+  const profileModal = document.getElementById('modalProfile');
+  if (profileModal.style.display === 'flex') {
+    openProfileModal();
+  }
+}
+
+function previewImages() {
+  const files = document.getElementById('productImages').files;
+  const previewRow = document.getElementById('imagePreviewRow');
+  
+  // Validate total count across previous selections
+  const incoming = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (tempSelectedImages.length + incoming.length > 5) {
+    showToast('Maximum 5 images allowed total', 'warning');
+    document.getElementById('productImages').value = '';
+    return;
+  }
+  
+  incoming.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      tempSelectedImages.push(e.target.result);
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'img-preview';
+      previewRow.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+  
+  // Clear the file input so user can select more files again
+  document.getElementById('productImages').value = '';
+}
+
+function submitProduct() {
+  const name = document.getElementById('productName').value.trim();
+  const category = document.getElementById('productCategory').value;
+  const subcategory = (document.getElementById('productSubcategory')?.value || '').trim();
+  const description = document.getElementById('productDescription').value.trim();
+  const price = parseFloat(document.getElementById('productPrice').value);
+  const condition = document.getElementById('productCondition').value;
+  const images = document.getElementById('productImages').files;
+  
+  // Validation
+  if (!name || !category || !description || !price || !condition) {
+    showToast('Please fill in all required fields', 'error');
+    return;
+  }
+  // Require subcategory when category has subcategories
+  const hasSubs = Array.isArray(categorySubcategories[category]) && categorySubcategories[category].length > 0;
+  if (hasSubs && !subcategory) {
+    showToast('Please select a subcategory', 'error');
+    return;
+  }
+  
+  if (price <= 0) {
+    showToast('Price must be greater than 0', 'error');
+    return;
+  }
+  
+  if (!editingProductId && tempSelectedImages.length === 0) {
+    showToast('Please add at least one image', 'error');
+    return;
+  }
+  
+  // Process images using accumulated selections
+  const processImages = () => {
+    if (editingProductId) {
+      const existingProduct = products.find(p => p.id == editingProductId);
+      const imagesToUse = tempSelectedImages.length > 0 ? tempSelectedImages : (existingProduct.images || []);
+      updateProductWithData(imagesToUse);
+    } else {
+      updateProductWithData(tempSelectedImages);
+    }
+  };
+  
+  const updateProductWithData = (imageDataUrls) => {
+    const productData = {
+      name,
+      category,
+      subcategory,
+      description,
+      price,
+      condition,
+      images: imageDataUrls.length > 0 ? imageDataUrls : ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNHB4IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPg=='],
+      seller: currentUser.name,
+      sellerEmail: currentUser.email
+    };
+    
+    if (editingProductId) {
+      // Update existing product
+      const productIndex = products.findIndex(p => p.id == editingProductId);
+      products[productIndex] = { ...products[productIndex], ...productData };
+      showToast('Product updated successfully!', 'success');
+    } else {
+      // Add new product
+      const newProduct = {
+        id: Date.now() + Math.random(),
+        ...productData,
+        dateAdded: new Date().toISOString(),
+        status: 'available',
+        views: 0,
+        likes: 0,
+        dislikes: 0,
+        favorites: 0
+      };
+      
+      products.unshift(newProduct);
+      
+      // Initialize stats
+      productStats[newProduct.id] = { views: 0, favorites: 0 };
+      productReactions[newProduct.id] = { likes: 0, dislikes: 0, userReaction: null };
+      
+      showToast('Product added successfully!', 'success');
+    }
+    
+    displayProductsByCategory();
+    closeModal('modalAddProduct');
+    clearProductForm();
+    saveState();
+  };
+  
+  processImages();
+}
+
+// Modal controls
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+  
+  if (modalId === 'modalAddProduct') {
+    editingProductId = null;
+  }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modalOverlay')) {
+    const modalId = e.target.id;
+    closeModal(modalId);
+  }
+});
+
+// ---- Sound effects (optional, muted by default) ----
+let isMuted = true; // accessibility-friendly default
+let audioCtx = null;
+let masterGain = null;
+let compressor = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+    if (audioCtx) {
+      // Master bus: gentle compression + master volume
+      compressor = audioCtx.createDynamicsCompressor();
+      try {
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 6;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+      } catch(_) {}
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.9;
+      compressor.connect(masterGain).connect(audioCtx.destination);
+    }
+  }
+}
+
+// Richer synth utilities
+function playSynth({
+  freq = 440,
+  type = 'sine',
+  attack = 0.004,
+  decay = 0.1,
+  sustain = 0.1,
+  release = 0.14,
+  gain = 0.05,
+  cutoff = 9000,
+  duration = 0.22,
+  detune = 0,
+  voices = 1,
+  detuneSpread = 6,
+  pan = 0,
+  glide = 0,
+  vibratoDepth = 0,
+  vibratoRate = 5,
+  delayTime = 0,
+  delayMix = 0
+} = {}) {
+  if (isMuted) return;
+  ensureAudio();
+  if (!audioCtx || !compressor) return;
+
+  const now = audioCtx.currentTime;
+  const vca = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+  const outNode = panner || filter;
+  if (panner) panner.pan.value = pan;
+
+  filter.type = 'lowpass';
+  filter.frequency.value = cutoff;
+  filter.Q.value = 0.7;
+
+  // Envelope
+  vca.gain.setValueAtTime(0, now);
+  vca.gain.linearRampToValueAtTime(gain, now + attack);
+  vca.gain.linearRampToValueAtTime(gain * 0.6, now + attack + decay);
+  const end = now + duration;
+  vca.gain.setValueAtTime(gain * 0.6, end);
+  vca.gain.linearRampToValueAtTime(0.0001, end + release);
+
+  // Subtle filter envelope for more natural transient
+  const fStart = Math.min(18000, cutoff * 1.2);
+  filter.frequency.setValueAtTime(fStart, now);
+  filter.frequency.exponentialRampToValueAtTime(cutoff, now + Math.max(0.04, attack + decay * 0.5));
+
+  // Connections: optionally add a light delay send
+  let post = vca;
+  if (delayTime > 0 && delayMix > 0) {
+    const delay = audioCtx.createDelay();
+    delay.delayTime.value = delayTime;
+    const delayGain = audioCtx.createGain();
+    delayGain.gain.value = Math.min(0.5, delayMix);
+    post.connect(delay).connect(delayGain).connect(compressor);
+  }
+
+  if (panner) filter.connect(panner);
+  (panner || filter).connect(vca).connect(compressor);
+
+  // Voices with detune and optional vibrato/glide
+  const voiceCount = Math.max(1, voices|0);
+  for (let i = 0; i < voiceCount; i++) {
+    const osc = audioCtx.createOscillator();
+    osc.type = type;
+    const det = (i - (voiceCount - 1) / 2) * detuneSpread + detune;
+    osc.detune.value = det;
+    osc.frequency.setValueAtTime(freq, now);
+    if (glide > 0) {
+      osc.frequency.linearRampToValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq * 0.97), now + Math.min(glide, 0.2));
+    }
+    // Vibrato via LFO
+    if (vibratoDepth > 0) {
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.value = vibratoRate;
+      lfoGain.gain.value = vibratoDepth;
+      lfo.connect(lfoGain).connect(osc.frequency);
+      lfo.start(now);
+      lfo.stop(end + release + 0.05);
+    }
+    osc.connect(filter);
+    osc.start(now);
+    osc.stop(end + release + 0.02);
+  }
+}
+
+function playTone(freq = 440, duration = 0.18, type = 'sine', gain = 0.05) {
+  playSynth({ freq, duration, type, gain });
+}
+
+function playChord(frequencies = [], stagger = 0.02, baseOpts = {}) {
+  frequencies.forEach((f, i) => {
+    setTimeout(() => playSynth({ freq: f, ...baseOpts }), i * stagger * 1000);
+  });
+}
+
+// Polished core SFX
+function clickSound(){
+  // Fast blip with slight pitch drop
+  playSynth({ freq: 520, type: 'square', attack: 0.002, decay: 0.05, sustain: 0.03, release: 0.05, gain: 0.025, cutoff: 7000, duration: 0.08, glide: 0.05, pan: 0.0 });
+}
+function successSound(){
+  // Pleasant ascending duo with light delay
+  playSynth({ freq: 560, type: 'sine', voices: 2, detuneSpread: 5, attack: 0.004, decay: 0.08, sustain: 0.08, release: 0.12, gain: 0.045, cutoff: 10000, duration: 0.16, vibratoDepth: 2, vibratoRate: 6, delayTime: 0.06, delayMix: 0.15 });
+  setTimeout(()=>playSynth({ freq: 720, type: 'sine', voices: 2, detuneSpread: 5, attack: 0.004, decay: 0.08, sustain: 0.08, release: 0.12, gain: 0.04, cutoff: 11000, duration: 0.14, vibratoDepth: 2, vibratoRate: 6, delayTime: 0.06, delayMix: 0.15 }), 38);
+}
+function errorSound(){
+  // Short descending with triangle timbre
+  playSynth({ freq: 260, type: 'triangle', voices: 1, attack: 0.003, decay: 0.12, sustain: 0.08, release: 0.14, gain: 0.04, cutoff: 3800, duration: 0.16, glide: 0.08 });
+}
+
+// Additional UX SFX
+function sfxFavoriteOn(){
+  // Warm duo bell
+  playSynth({ freq: 520, type: 'sine', voices: 2, detuneSpread: 4, attack: 0.004, decay: 0.09, sustain: 0.08, release: 0.12, gain: 0.05, cutoff: 10000, duration: 0.16, delayTime: 0.05, delayMix: 0.12 });
+}
+function sfxFavoriteOff(){
+  // Soft down blip
+  playSynth({ freq: 320, type: 'triangle', voices: 1, attack: 0.003, decay: 0.08, sustain: 0.06, release: 0.1, gain: 0.035, cutoff: 5200, duration: 0.12, glide: 0.06 });
+}
+function sfxLike(){
+  // Bright square duo
+  playSynth({ freq: 520, type: 'square', voices: 2, detuneSpread: 8, attack: 0.003, decay: 0.07, sustain: 0.06, release: 0.09, gain: 0.04, cutoff: 8500, duration: 0.14, pan: -0.05 });
+}
+function sfxDislike(){
+  // Short descending bite
+  playSynth({ freq: 360, type: 'triangle', voices: 2, detuneSpread: 6, attack: 0.003, decay: 0.09, sustain: 0.06, release: 0.1, gain: 0.035, cutoff: 4600, duration: 0.13, glide: 0.06, pan: 0.05 });
+}
+function sfxOpenModal(){
+  // Gentle whoop up
+  playSynth({ freq: 420, type: 'sine', voices: 2, detuneSpread: 3, attack: 0.006, decay: 0.12, sustain: 0.1, release: 0.12, gain: 0.04, cutoff: 7200, duration: 0.2, vibratoDepth: 3, vibratoRate: 5, delayTime: 0.05, delayMix: 0.12 });
+}
+function sfxCloseModal(){
+  // Gentle whoop down
+  playSynth({ freq: 300, type: 'sine', voices: 2, detuneSpread: 3, attack: 0.004, decay: 0.1, sustain: 0.08, release: 0.1, gain: 0.035, cutoff: 6500, duration: 0.16, glide: 0.06 });
+}
+function sfxNavigate(){ clickSound(); }
+function sfxSave(){
+  // Triad arpeggio
+  playSynth({ freq: 520, type: 'sine', voices: 2, detuneSpread: 2, attack: 0.004, decay: 0.1, sustain: 0.1, release: 0.12, gain: 0.04, cutoff: 10500, duration: 0.16, delayTime: 0.06, delayMix: 0.15 });
+  setTimeout(()=>playSynth({ freq: 660, type: 'sine', voices: 2, detuneSpread: 2, attack: 0.004, decay: 0.1, sustain: 0.1, release: 0.12, gain: 0.04, cutoff: 11000, duration: 0.14, delayTime: 0.06, delayMix: 0.15 }), 40);
+  setTimeout(()=>playSynth({ freq: 880, type: 'sine', voices: 2, detuneSpread: 2, attack: 0.004, decay: 0.1, sustain: 0.1, release: 0.12, gain: 0.038, cutoff: 12000, duration: 0.14, delayTime: 0.06, delayMix: 0.15 }), 78);
+}
+
+// Global SFX on all buttons
+(function attachButtonSfx(){
+  function handler(e){
+    try{
+      const btn = e.target && e.target.closest ? e.target.closest('button') : null;
+      if(!btn) return;
+      if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') return;
+      const now = (window.performance && performance.now) ? performance.now() : Date.now();
+      if (window.__lastBtnSfx && (now - window.__lastBtnSfx) < 60) return;
+      window.__lastBtnSfx = now;
+      clickSound();
+    }catch(_){/* noop */}
+  }
+  if (document.readyState !== 'loading') {
+    document.addEventListener('click', handler);
+  } else {
+    document.addEventListener('DOMContentLoaded', () => document.addEventListener('click', handler));
+  }
+})();
+ 
+
+// Toast notifications
+function showToast(message, type = 'info', duration = 3000) {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  const icons = {
+    success: '<i class="fa-solid fa-circle-check" style="color:#16a34a"></i>',
+    error: '<i class="fa-solid fa-circle-xmark" style="color:#dc2626"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i>',
+    info: '<i class="fa-solid fa-circle-info" style="color:#2563eb"></i>'
+  };
+  
+  toast.innerHTML = `
+    <span class="toast-icon" aria-hidden="true">${icons[type] || icons.info}</span>
+    <span class="toast-message">${message}</span>
+    <button class="toast-close" aria-label="Dismiss notification" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+  `;
+  
+  document.body.appendChild(toast);
+  // Play corresponding sound
+  if (type === 'success') successSound();
+  else if (type === 'error') errorSound();
+  else clickSound();
+  
+  // Auto remove after duration
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.remove();
+    }
+  }, duration);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  // Escape to close modals
+  if (e.key === 'Escape') {
+    const openModal = document.querySelector('.modalOverlay[style*="flex"]');
+    if (openModal) {
+      closeModal(openModal.id);
+    }
+  }
+  
+  // Ctrl/Cmd + K to focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+});
+</script>
+
+</body>
+</html>
